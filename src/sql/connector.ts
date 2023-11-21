@@ -18,15 +18,31 @@ export class SqlConnect {
       })
     }
 
-    this.connect().then(r => console.log("Connected to database"));
+    this.connect().then(() => {});
   }
 
   public async connect(): Promise<void> {
-    if (this.isConnecting) return;
+    console.log("Connecting to database");
+    if (this.isConnecting) return new Promise((resolve) => {
+      const interval = setInterval(() => {
+        console.log("Waiting for connection");
+        if (!this.isConnecting) {
+          console.log("Connected to database");
+          clearInterval(interval);
+          resolve();
+        }
+      }, 100);
+    });
+    if (this.isConnected()) {
+      console.log("Already connected to database");
+      return;
+    }
+    console.log("Starting connection");
     this.isConnecting = true;
     return new Promise<void>((resolve, reject) => {
       this.connection.connect((err) => {
         if (err) reject(err);
+        console.log("Connected to database");
         this.isConnecting = false;
         resolve();
       })
