@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es5",
+    "sourceMap": true,                               /* Specify what module code is generated. */
+    "esModuleInterop": true,                             /* Emit additional JavaScript to ease support for importing CommonJS modules. This enables 'allowSyntheticDefaultImports' for type compatibility. */
+    "forceConsistentCasingInFileNames": true,            /* Ensure that casing is correct in imports. */
+    "strict": true,
+    "moduleResolution": "node",
+    "skipLibCheck": true,                              /* Skip type checking all .d.ts files. */
+    "lib": ["esnext"],
+    "outDir": "./dist",                                   /* Generates corresponding '.map' file. */
+    "resolveJsonModule": true,
+    "jsx": "preserve",
+    "types": [
+      "node"
+    ]
+  },
+  "exclude": [
+    "node_modules"
+  ],
+  "include": [
+      "src/**/*"
+  ]
+}
