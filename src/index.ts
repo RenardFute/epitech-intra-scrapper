@@ -3,8 +3,10 @@ import { fetchModulesForPromo } from "./intra/modules"
 import connector from "./sql/connector"
 import Module from "./sql/objects/module"
 import { fetchActivitiesForModule } from "./intra/activities"
-import Activity from "./sql/objects/activity";
+import Activity from "./sql/objects/activity"
+import { fetchRoomsForDate } from "./oros/rooms";
 
+/*
 (async () => {
   const syncedPromos = await getSyncedPromos()
   console.log("Synced promos: " + syncedPromos.join(", "))
@@ -43,4 +45,9 @@ import Activity from "./sql/objects/activity";
     // Wait a bit to avoid getting banned
     await new Promise((resolve) => setTimeout(resolve, 250))
   }
+})()
+*/
+
+(async () => {
+  await fetchRoomsForDate(new Date())
 })()

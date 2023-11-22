@@ -1,4 +1,4 @@
-import { SqlType } from "../connector"
+import { SqlBoolean, SqlType } from "../connector"
 import { Promo } from "./sourceUser"
 import { hashCode } from "../../utils/string"
 
@@ -11,13 +11,13 @@ export default class Module extends SqlType {
   year: number
   city: string
   credits: number
-  isOngoing: boolean
+  isOngoing: SqlBoolean
   start: Date
   end: Date
-  isRegistrationOpen: boolean
+  isRegistrationOpen: SqlBoolean
   endRegistration: Date | null
-  isRoadblock: boolean
-  isMandatory: boolean
+  isRoadblock: SqlBoolean
+  isMandatory: SqlBoolean
   promo: Promo
   url: string
 

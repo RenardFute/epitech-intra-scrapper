@@ -1,4 +1,4 @@
-import { SqlType } from "../connector"
+import { SqlBoolean, SqlType } from "../connector"
 import Module from "./module"
 import { IdOf } from "../../utils/types"
 import { hashCode } from "../../utils/string"
@@ -8,15 +8,15 @@ export default class Activity extends SqlType {
   id: number
   moduleId: IdOf<Module>
   name: string
-  isOngoing: boolean
+  isOngoing: SqlBoolean
   start: Date
   end: Date
-  isMandatory: boolean
+  isMandatory: SqlBoolean
   location: string
   description: string
   isProject: boolean
-  isGraded: boolean
-  hasMeeting: boolean
+  isGraded: SqlBoolean
+  hasMeeting: SqlBoolean
   url: string
 
   static databaseName = "activities"

@@ -53,6 +53,7 @@ export class SqlConnect {
     query = query.replaceAll(/([a-z])([A-Z])/g, (_, p1, p2) => {
       return `${p1}_${p2.toLowerCase()}`
     })
+    query = query.replaceAll(/(`[a-z_]+` = (\d+|'.*'))(,)/gm, '$1 AND ')
     return new Promise((resolve, reject) => {
       this.connection.query(query, (err, result) => {
         if (err) reject(err)
@@ -131,3 +132,5 @@ export type SqlFilter<T extends abstract new (...args: any) => any> = {
 }
 
 export default new SqlConnect()
+
+export type SqlBoolean = boolean | number
