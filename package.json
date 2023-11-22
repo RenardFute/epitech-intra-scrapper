@@ -6,11 +6,13 @@
   "type": "commonjs",
   "scripts": {
     "prestart": "rimraf -rf dist && tsc -p . && cp-cli .env dist/.env",
-    "start": "cd dist && node --experimental-json-modules index.js"
+    "start": "cd dist && node --experimental-json-modules index.js",
+    "lint": "eslint . --ext .ts"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "dayjs": "^1.11.10",
     "dotenv": "^16.3.1",
     "mysql": "^2.18.1",
     "puppeteer": "^21.5.2"
@@ -18,7 +20,9 @@
   "devDependencies": {
     "@types/mysql": "^2.15.24",
     "@types/node": "^20.9.2",
+    "@typescript-eslint/eslint-plugin": "^6.12.0",
     "cp-cli": "^2.0.0",
+    "eslint": "^8.54.0",
     "rimraf": "^5.0.5"
   }
 }

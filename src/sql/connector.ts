@@ -1,13 +1,13 @@
 import mysql from "mysql"
 import 'dotenv/config'
-import exp from "constants"
+
 export class SqlConnect {
-  connection: mysql.Connection;
-  private isConnecting: boolean = false;
+  connection: mysql.Connection
+  private isConnecting: boolean = false
 
   constructor(connection?: mysql.Connection) {
     if (connection) {
-      this.connection = connection;
+      this.connection = connection
     } else {
       this.connection = mysql.createConnection({
         host: process.env.DB_HOST,
@@ -18,79 +18,104 @@ export class SqlConnect {
       })
     }
 
-    this.connect().then(() => {});
+    this.connect().then(() => {})
   }
 
   public async connect(): Promise<void> {
-    console.log("Connecting to database");
     if (this.isConnecting) return new Promise((resolve) => {
       const interval = setInterval(() => {
-        console.log("Waiting for connection");
         if (!this.isConnecting) {
-          console.log("Connected to database");
-          clearInterval(interval);
-          resolve();
+          clearInterval(interval)
+          resolve()
         }
-      }, 100);
-    });
+      }, 100)
+    })
     if (this.isConnected()) {
-      console.log("Already connected to database");
-      return;
+      return
     }
-    console.log("Starting connection");
-    this.isConnecting = true;
+    this.isConnecting = true
     return new Promise<void>((resolve, reject) => {
       this.connection.connect((err) => {
-        if (err) reject(err);
-        console.log("Connected to database");
-        this.isConnecting = false;
-        resolve();
+        if (err) reject(err)
+        this.isConnecting = false
+        resolve()
       })
     })
   }
 
   public isConnected(): boolean {
-    return this.connection.state === "connected";
+    return !this.isConnecting && (this.connection.state === "connected" || this.connection.state === "authenticated")
   }
 
-  public async query(query: string, values: any[]): Promise<any> {
-    if (!this.isConnected()) await this.connect();
-
+  public async query(query: string, ...values: any): Promise<any> {
+    if (!this.isConnected()) await this.connect()
+    query = mysql.format(query, values)
+    query = query.replaceAll(/([a-z])([A-Z])/g, (_, p1, p2) => {
+      return `${p1}_${p2.toLowerCase()}`
+    })
     return new Promise((resolve, reject) => {
-      this.connection.query(query, values, (err, result) => {
-        if (err) reject(err);
-        resolve(result);
+      this.connection.query(query, (err, result) => {
+        if (err) reject(err)
+        resolve(result)
       })
     })
   }
 
   public async getMany<T extends typeof SqlType, K extends InstanceType<T>>(type: T, filter?: SqlFilter<T>): Promise<K[]> {
-    const query = filter ? `SELECT * FROM ${type.databaseName} WHERE ?` : `SELECT * FROM ${type.databaseName}`;
-    const values: SqlFilter<T>[] = [filter ?? {}];
+    const query = filter ? `SELECT * FROM ${type.databaseName} WHERE ?` : `SELECT * FROM ${type.databaseName}`
+    const values: SqlFilter<T> = filter ?? {}
 
-    const result = await this.query(query, values);
-    const objects = [] as K[];
+    const result = await this.query(query, values)
+    const objects = [] as K[]
     for (const row of result) {
-      const object = new type() as K;
+      const object = new type() as K
       for (const key in row) {
-        object[<keyof K>key] = row[key];
+        object[<keyof K>key] = row[key]
       }
-      objects.push(object);
+      objects.push(object)
     }
-    return objects;
+    return objects
   }
 
-  public async getOne<T extends typeof SqlType, K extends InstanceType<T>>(type: T, filter?: SqlFilter<T>): Promise<K> {
-    const results = await this.getMany(type, filter) as K[];
+  public async getOne<T extends typeof SqlType, K extends InstanceType<T>>(type: T, filter?: SqlFilter<T>): Promise<K | null> {
+    const results = await this.getMany(type, filter) as K[]
 
-    if (results.length === 0) throw new Error("No results found");
+    if (results.length === 0) return null
 
-    return results[0];
+    return results[0]
+  }
+
+  public async insert<T extends typeof SqlType, K extends InstanceType<T>>(type: T, object: K): Promise<void> {
+    const query = `INSERT INTO ${type.databaseName} SET ?`
+    await this.query(query, object)
+  }
+
+  public async update<T extends typeof SqlType, K extends InstanceType<T>>(type: T, object: K, filter?: SqlFilter<T>): Promise<boolean> {
+    const query = `UPDATE ${type.databaseName} SET ? WHERE ?`
+
+    const result = await this.query(query, object, filter ?? {})
+    return result.changedRows > 0
+  }
+
+  public async insertOrUpdate<T extends typeof SqlType, K extends InstanceType<T>>(type: T, object: K, match: SqlFilter<T>): Promise<{ isDiff: boolean, oldObject: K, newObject: K } | void> {
+    // First we want to check if the object exists
+    const results = await this.getMany(type, match) as K[]
+
+    // If it does, we update it and return the updated object and the old one
+    if (results.length > 0) {
+      const oldObject = results[0]
+      const diff = await this.update(type, object, match)
+      return { isDiff: diff, oldObject, newObject: object }
+    }
+
+    // Otherwise we insert it and return nothing
+    await this.insert(type, object)
+    return
   }
 
   public close() {
     if (this.isConnected())
-      this.connection.end();
+      this.connection.end()
   }
 }
 
@@ -105,4 +130,4 @@ export type SqlFilter<T extends abstract new (...args: any) => any> = {
   databaseName?: never;
 }
 
-export default new SqlConnect();
+export default new SqlConnect()
