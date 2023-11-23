@@ -1,6 +1,6 @@
 import Room, { Rooms } from "../sql/objects/room"
-import connector from "../sql/connector";
-import Activity from "../sql/objects/activity";
+import connector from "../sql/connector"
+import Activity from "../sql/objects/activity"
 
 
 type RoomDTO = Array<{
