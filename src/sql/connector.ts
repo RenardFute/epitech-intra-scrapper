@@ -71,7 +71,11 @@ export class SqlConnect {
     for (const row of result) {
       const object = new type() as K
       for (const key in row) {
-        object[<keyof K>key] = row[key]
+        // Revert snake_case
+        const trueKey = key.replaceAll(/_([a-z])/gm, (_, p1) => {
+          return p1.toUpperCase()
+        })
+        object[<keyof K>trueKey] = (trueKey.startsWith('is') || trueKey.startsWith('has')) ? row[key] === 1 : row[key]
       }
       objects.push(object)
     }
@@ -98,7 +102,7 @@ export class SqlConnect {
     return result.changedRows > 0
   }
 
-  public async insertOrUpdate<T extends typeof SqlType, K extends InstanceType<T>>(type: T, object: K, match: SqlFilter<T>): Promise<{ isDiff: boolean, oldObject: K, newObject: K } | void> {
+  public async insertOrUpdate<T extends typeof SqlType, K extends InstanceType<T>>(type: T, object: K, match: SqlFilter<T>): Promise<SqlUpdate<T, K>> {
     // First we want to check if the object exists
     const results = await this.getMany(type, match) as K[]
 
@@ -134,3 +138,4 @@ export type SqlFilter<T extends abstract new (...args: any) => any> = {
 export default new SqlConnect()
 
 export type SqlBoolean = boolean | number
+export type SqlUpdate<T extends typeof SqlType, K extends InstanceType<T>> = { isDiff: boolean, oldObject: K, newObject: K } | void
