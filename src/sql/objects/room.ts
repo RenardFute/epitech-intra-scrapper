@@ -1,6 +1,6 @@
-import { IdOf } from "../../utils/types";
-import Activity from "./activity";
-import { SqlType } from "../connector";
+import { IdOf } from "../../utils/types"
+import Activity from "./activity"
+import { SqlType } from "../connector"
 
 export enum Rooms {
   COMTE = "Comté",
@@ -60,5 +60,11 @@ export default class Room extends SqlType{
     this.start = new Date()
     this.end = new Date()
     this.room = Rooms.ACCUEIL
+  }
+
+  static computeId = (id: number, start: Date) => {
+    let computedId = id * 31 + start.getDay()
+    computedId = computedId > 0 ? computedId : -computedId
+    return computedId
   }
 }

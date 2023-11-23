@@ -7,12 +7,13 @@ type RoomDTO = Array<{
   name: string,
   hide_if_free: boolean,
   rooms: {
-    [key: string]: {
+    [key in Rooms]: {
       activities: Array<{
         activity_title: string,
-        startAt: number,
-        endAt: number,
-        oros_tags: any[]
+        start_at: number,
+        end_at: number,
+        oros_tags: any[],
+        type?: string,
       }>,
       force_closed?: boolean,
       force_closed_message?: string,
@@ -36,9 +37,10 @@ export const fetchRoomsForDate = async (date: Date): Promise<Room[]> => {
   if (!data) return []
 
   const rooms = data.map((o) => o.rooms).flat()
+  const result = [] as Room[]
 
   for (const place of rooms) {
-    for (const room of Object.keys(place)) {
+    for (const room of Object.keys(place) as Rooms[]) {
       const activities = place[room].activities
       for (const activity of activities) {
         const matchingActivity = await connector.getOne(Activity, {
@@ -47,10 +49,22 @@ export const fetchRoomsForDate = async (date: Date): Promise<Room[]> => {
         })
 
         if (!matchingActivity) continue
-        console.log(matchingActivity)
+
+        const end = new Date(activity.end_at)
+        const start = new Date(activity.start_at)
+        const id = Room.computeId(matchingActivity.id, start)
+
+        const newRoom: Room = {
+          activityId: matchingActivity.id,
+          end,
+          id,
+          room,
+          start
+        }
+        result.push(newRoom)
       }
     }
   }
 
-  return []
+  return result
 }
