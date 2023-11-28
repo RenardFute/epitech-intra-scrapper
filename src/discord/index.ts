@@ -1,18 +1,10 @@
-import {
-  ActivityOptions,
-  Client,
-  Collection,
-  Events,
-  GatewayIntentBits,
-  REST,
-  Routes,
-  SlashCommandBuilder,
-  TextChannel,
-  ActivityType
-} from "discord.js"
+import {ActivityOptions, Client, Collection, Events, GatewayIntentBits, REST, Routes, SlashCommandBuilder, TextChannel, ActivityType, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder} from "discord.js"
 import 'dotenv/config'
 import path from "path"
 import * as fs from "fs"
+import SourceUser, { Promo } from "../sql/objects/sourceUser"
+import connector from "../sql/connector"
+import update from "./commands/utils/update"
 
 type CustomClient = Client & { commands: Collection<string, Command> }
 export type Command = { data: SlashCommandBuilder, execute: (client: Client, interaction: any) => Promise<void> }
@@ -104,6 +96,105 @@ client.on(Events.InteractionCreate, async interaction => {
     }
   }
 })
+
+const userCookiesMapping = new Map<string, Promo>()
+
+client.on(Events.InteractionCreate, async interaction => {
+  if (!interaction.isAnySelectMenu()) return
+
+  if (interaction.customId === "promoSelect") {
+    const promo = interaction.values[0] as keyof typeof Promo
+    userCookiesMapping.set(interaction.user.id, Promo[promo])
+
+    const modal: ModalBuilder = new ModalBuilder()
+      .setTitle("🍪 Cookie de connexion")
+      .setCustomId("cookieModal")
+
+    const cookieInput: TextInputBuilder = new TextInputBuilder()
+      .setCustomId("cookieInput")
+      .setPlaceholder("eyJ0eXAi..............")
+      .setMinLength(100)
+      .setMaxLength(300)
+      .setStyle(TextInputStyle.Paragraph)
+      .setLabel("Cookie")
+      .setRequired(true)
+
+    const nameInput: TextInputBuilder = new TextInputBuilder()
+      .setCustomId("nameInput")
+      .setPlaceholder("John Doe")
+      .setMinLength(1)
+      .setMaxLength(50)
+      .setStyle(TextInputStyle.Short)
+      .setLabel("Name")
+      .setRequired(true)
+
+    const firstYearInput: TextInputBuilder = new TextInputBuilder()
+      .setCustomId("yearInput")
+      .setPlaceholder("2022")
+      .setMinLength(4)
+      .setMaxLength(4)
+      .setStyle(TextInputStyle.Short)
+      .setLabel("Year (when you started Epitech)")
+      .setRequired(true)
+      .setValue(new Date().getFullYear().toString())
+
+    const row : ActionRowBuilder<TextInputBuilder> = new ActionRowBuilder({
+      components: [cookieInput]
+    })
+
+    const secondRow : ActionRowBuilder<TextInputBuilder> = new ActionRowBuilder({
+      components: [nameInput]
+    })
+
+    const thirdRow : ActionRowBuilder<TextInputBuilder> = new ActionRowBuilder({
+      components: [firstYearInput]
+    })
+
+    modal.addComponents(row, secondRow, thirdRow)
+
+    await interaction.showModal(modal)
+  } else {
+    await interaction.reply({ content: "❌ Une erreur est survenue !", ephemeral: true })
+  }
+})
+
+client.on(Events.InteractionCreate, async interaction => {
+  if (!interaction.isModalSubmit()) return
+
+  if (interaction.customId === "cookieModal") {
+    await interaction.deferReply({ ephemeral: true })
+    const promo = userCookiesMapping.get(interaction.user.id)
+    if (!promo) {
+      await interaction.reply({ content: "❌ Vous n'avez pas sélectionné votre promo !", ephemeral: true })
+      return
+    }
+
+    const cookie = interaction.fields.getField("cookieInput").value as string
+    const name = interaction.fields.getField("nameInput").value as string
+    const year = interaction.fields.getField("yearInput").value as string
+
+    const sourceUser = {
+      name,
+      cookie,
+      year: parseInt(year),
+      promo
+    } as SourceUser
+
+    const result = await connector.insertOrUpdate(SourceUser, sourceUser, { name: sourceUser.name })
+    if (result) {
+      if (result.isDiff) {
+        await interaction.editReply({ content: "✅ Utilisateur mis à jour !"})
+      } else {
+        await interaction.editReply({ content: "👍 Votre cookie est toujours valide, donc pas de mise à jour !"})
+      }
+    } else {
+      await interaction.editReply({ content: "🍪 Miam, merci pour le cookie !"})
+    }
+  } else {
+    await interaction.reply({ content: "❌ Une erreur est survenue !", ephemeral: true })
+  }
+})
+
 
 // Log in to Discord with your client's token
 client.login(process.env.DISCORD_TOKEN).then()
