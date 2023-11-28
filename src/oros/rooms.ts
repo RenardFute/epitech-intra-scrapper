@@ -1,6 +1,13 @@
 import Room, { Rooms } from "../sql/objects/room"
 import connector from "../sql/connector"
 import Activity from "../sql/objects/activity"
+import Module from "../sql/objects/module"
+import { findAsyncSequential } from "../utils/arrays"
+import dayjs from "dayjs"
+import timezone from "dayjs/plugin/timezone"
+import utc from "dayjs/plugin/utc"
+dayjs.extend(timezone)
+dayjs.extend(utc)
 
 
 type RoomDTO = Array<{
@@ -43,15 +50,22 @@ export const fetchRoomsForDate = async (date: Date): Promise<Room[]> => {
     for (const room of Object.keys(place) as Rooms[]) {
       const activities = place[room].activities
       for (const activity of activities) {
-        const matchingActivity = await connector.getOne(Activity, {
-          name: activity.activity_title,
-          isOngoing: 1
+        const matchingActivities = await connector.getMany(Activity, {
+          name: activity.activity_title
+        })
+
+        if (!matchingActivities) continue
+        const matchingActivity = await findAsyncSequential(matchingActivities, async (a) => {
+          const module = await connector.getOne(Module, {id: a.moduleId})
+          if (!module) return false
+          return module.isOngoing === true
         })
 
         if (!matchingActivity) continue
 
-        const end = new Date(activity.end_at)
-        const start = new Date(activity.start_at)
+        const sample = dayjs().tz('Europe/Paris').toDate().getTimezoneOffset()
+        const end = dayjs(activity.end_at).utc().add(sample, 'minutes').toDate()
+        const start = dayjs(activity.start_at).utc().add(sample, 'minutes').toDate()
         const id = Room.computeId(matchingActivity.id, start)
 
         const newRoom: Room = {

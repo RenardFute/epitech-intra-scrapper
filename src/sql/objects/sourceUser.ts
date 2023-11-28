@@ -2,6 +2,7 @@ import { Protocol } from "devtools-protocol"
 import connector, { SqlType } from "../connector"
 import { Page } from "puppeteer"
 import { browser, getGDPRAcceptCookie, isLoginPage } from "../../intra/utils"
+import { updateChannel } from "../../discord"
 
 export enum Promo {
   TEK_1 = "TEK 1",
@@ -67,6 +68,8 @@ export const getSyncedPromos = async (): Promise<Promo[]> => {
     await page.setViewport({ width: 1920, height: 1080 })
     if (!await isLoginPage(page)) {
       promos.push(user.promo)
+    } else {
+      updateChannel?.send(`The user ${user.name} is not logged in anymore, please update his cookie.`)
     }
     await page.close()
   }

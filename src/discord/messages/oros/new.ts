@@ -8,6 +8,11 @@ import { getTextWidthWithStyle } from "../../utils/text"
 import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle } from "discord.js"
 import { updateChannel } from "../../index"
 import { promoMapping } from "../../utils/mappings"
+import dayjs from "dayjs"
+import timezone from "dayjs/plugin/timezone"
+import utc from "dayjs/plugin/utc"
+dayjs.extend(timezone)
+dayjs.extend(utc)
 
 export const sendRoomCreatedMessage = async (room: Room) => {
   const activity = await connector.getOne(Activity, {id: room.activityId})
@@ -138,12 +143,12 @@ const createImage = async (room: Room, activity: Activity, module: Module) => {
   // Draw the activity start time
   ctx.font = 'bold 20px sans-serif'
   ctx.fillStyle = '#ffffff'
-  ctx.fillText(room.start.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'}), 20, 90)
+  ctx.fillText(dayjs(room.start).utc().tz('Europe/Paris').format("HH[h]mm"), 20, 90)
 
   // Draw the activity end time
   ctx.font = 'bold 20px sans-serif'
   ctx.fillStyle = '#ffffff'
-  ctx.fillText(room.end.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'}), 20, 120)
+  ctx.fillText(dayjs(room.end).utc().tz('Europe/Paris').format("HH[h]mm"), 20, 120)
 
   // Draw the room name in the bottom right corner
   ctx.font = 'bold 20px sans-serif'

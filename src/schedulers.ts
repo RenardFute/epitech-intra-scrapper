@@ -16,8 +16,9 @@ const roomsScrapFrequency = 1000 * 60 * 60 // Each hour
 
 type ScrapStatistics = { fetched: number, inserted: number, updated: number, deleted: number, time: number }
 
-export const modulesScrap = async () => {
+export const modulesScrap = async (): Promise<ScrapStatistics> => {
   const syncedPromos = await getSyncedPromos()
+  const totalStats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
 
   for (const promo of syncedPromos) {
     const stats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
@@ -37,11 +38,17 @@ export const modulesScrap = async () => {
     }
     stats.time = Date.now() - stats.time
     console.log("Modules scrap done for promo", promo, new Date().toLocaleString(), stats)
+    totalStats.fetched += stats.fetched
+    totalStats.inserted += stats.inserted
+    totalStats.updated += stats.updated
+    totalStats.deleted += stats.deleted
   }
+  totalStats.time = Date.now() - totalStats.time
+  return totalStats
 }
 
-export const activitiesScrap = async () => {
-  const modulesSynced = await connector.getMany(Module, {isOngoing: true})
+export const activitiesScrap = async (): Promise<ScrapStatistics> => {
+  const modulesSynced = await connector.getMany(Module, {isOngoing: 1})
   const stats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
   for (const module of modulesSynced) {
     const activities = await fetchActivitiesForModule(module)
@@ -63,9 +70,10 @@ export const activitiesScrap = async () => {
   }
   stats.time = Date.now() - stats.time
   console.log("Activities scrap done", new Date().toLocaleString(), stats)
+  return stats
 }
 
-export const roomsScrap = async () => {
+export const roomsScrap = async (): Promise<ScrapStatistics> => {
   const stats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
   const rooms = await fetchRoomsForDate(new Date())
   stats.fetched = rooms.length
@@ -83,6 +91,7 @@ export const roomsScrap = async () => {
   }
   stats.time = Date.now() - stats.time
   console.log("Rooms scrap done", new Date().toLocaleString(), stats)
+  return stats
 }
 
 export const startSchedulers = () => {
@@ -96,17 +105,17 @@ export const startSchedulers = () => {
   console.log("  -> Rooms scrap in", delayBeforeNextHour / 1000 / 60, "minutes")
 
   setTimeout(() => {
-    modulesScrap()
+    modulesScrap().then()
     setInterval(modulesScrap, modulesScrapFrequency)
   }, delayBeforeMidnight)
 
   setTimeout(() => {
-    activitiesScrap()
+    activitiesScrap().then()
     setInterval(activitiesScrap, activitiesScrapFrequency)
   }, delayBeforeMidday)
 
   setTimeout(() => {
-    roomsScrap()
+    roomsScrap().then()
     setInterval(roomsScrap, roomsScrapFrequency)
   }, delayBeforeNextHour)
 }

@@ -1,4 +1,5 @@
 import {
+  ActivityOptions,
   Client,
   Collection,
   Events,
@@ -6,13 +7,14 @@ import {
   REST,
   Routes,
   SlashCommandBuilder,
-  TextChannel
+  TextChannel,
+  ActivityType
 } from "discord.js"
 import 'dotenv/config'
 import path from "path"
 import * as fs from "fs"
 
-type CustomClient = Client & { commands: Collection<string, any> }
+type CustomClient = Client & { commands: Collection<string, Command> }
 export type Command = { data: SlashCommandBuilder, execute: (client: Client, interaction: any) => Promise<void> }
 
 // Create a new client instance
@@ -64,13 +66,21 @@ const registerCommands = (async () => {
   }
 })
 
-registerCommands()
+registerCommands().then()
 
 // When the client is ready, run this code (only once)
 // We use 'c' for the event parameter to keep it separate from the already defined 'client'
 client.once(Events.ClientReady, c => {
   console.log(`Logged in as ${c.user?.tag}!`)
   updateChannel = c.channels.cache.get(process.env.DISCORD_UPDATE_CHANNEL_ID ?? '') as TextChannel
+
+  // Set a status (activity) for the bot
+  const activity: ActivityOptions = {
+    name: "The intranet",
+    type: ActivityType.Watching,
+    url: "https://intra.epitech.eu"
+  }
+  c.user?.setActivity(activity)
 })
 
 client.on(Events.InteractionCreate, async interaction => {
@@ -96,8 +106,6 @@ client.on(Events.InteractionCreate, async interaction => {
 })
 
 // Log in to Discord with your client's token
-client.login(process.env.DISCORD_TOKEN)
+client.login(process.env.DISCORD_TOKEN).then()
 
 export let updateChannel: TextChannel | undefined = undefined
-
-export default client
