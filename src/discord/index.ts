@@ -4,7 +4,6 @@ import path from "path"
 import * as fs from "fs"
 import SourceUser, { Promo } from "../sql/objects/sourceUser"
 import connector from "../sql/connector"
-import update from "./commands/utils/update"
 
 type CustomClient = Client & { commands: Collection<string, Command> }
 export type Command = { data: SlashCommandBuilder, execute: (client: Client, interaction: any) => Promise<void> }

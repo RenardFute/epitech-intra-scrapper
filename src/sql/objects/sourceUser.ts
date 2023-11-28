@@ -57,6 +57,15 @@ export const openPageForPromo = async (promo: Promo, url: string): Promise<{ pag
   return {page, user}
 }
 
+export const isUserStillLoggedIn = async (user: SourceUser): Promise<boolean> => {
+  const b = await browser()
+  const page = await b.newPage()
+  await page.setCookie(getGDPRAcceptCookie(), user.buildConnectionCookie())
+  await page.goto('https://intra.epitech.eu')
+  await page.setViewport({ width: 1920, height: 1080 })
+  return !await isLoginPage(page)
+}
+
 export const getSyncedPromos = async (): Promise<Promo[]> => {
   const sourceUsers = await connector.getMany(SourceUser)
   const promos = [] as Promo[]
