@@ -50,7 +50,7 @@ export class SqlConnect {
   public async query(query: string, ...values: any): Promise<any> {
     if (!this.isConnected()) await this.connect()
     query = mysql.format(query, values)
-    query = query.replaceAll(/([a-z])([A-Z])/g, (_, p1, p2) => {
+    query = query.replaceAll(/([a-z])([A-Z])(?=[^=']*=[^=]*)/g, (_, p1, p2) => {
       return `${p1}_${p2.toLowerCase()}`
     })
     query = query.replaceAll(/(?<=WHERE.*)(`[a-z_]+` = (\d+|'([^']|\\')*'))(,)/gm, '$1 AND')
