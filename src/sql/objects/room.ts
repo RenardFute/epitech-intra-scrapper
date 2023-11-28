@@ -63,7 +63,7 @@ export default class Room extends SqlType{
   }
 
   static computeId = (id: number, start: Date) => {
-    let computedId = id * 31 + start.getDay()
+    let computedId = id * 31 + start.getHours() * 31 + start.getMinutes()
     computedId = computedId > 0 ? computedId : -computedId
     return computedId
   }

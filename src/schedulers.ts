@@ -8,6 +8,7 @@ import { fetchRoomsForDate } from "./oros/rooms"
 import Room from "./sql/objects/room"
 import { sendModuleUpdateMessage } from "./discord/messages/modules/update"
 import { sendModuleCreatedMessage } from "./discord/messages/modules/new"
+import { sendRoomCreatedMessage } from "./discord/messages/oros/new"
 
 const modulesScrapFrequency = 1000 * 60 * 60 * 24 * 1 // Each day
 const activitiesScrapFrequency = 1000 * 60 * 60 * 12 // Twice a day
@@ -76,7 +77,7 @@ export const roomsScrap = async () => {
         stats.updated++
       }
     } else {
-      // TODO: Notify new room
+      await sendRoomCreatedMessage(room)
       stats.inserted++
     }
   }
@@ -88,6 +89,11 @@ export const startSchedulers = () => {
   const delayBeforeMidnight = 1000 * 60 * 60 * 24 - (Date.now() % (1000 * 60 * 60 * 24))
   const delayBeforeMidday = 1000 * 60 * 60 * 12 - (Date.now() % (1000 * 60 * 60 * 12))
   const delayBeforeNextHour = 1000 * 60 * 60 - (Date.now() % (1000 * 60 * 60))
+
+  console.log("Schedulers started", new Date().toLocaleString())
+  console.log("  -> Modules scrap in", delayBeforeMidnight / 1000 / 60 / 60, "hours")
+  console.log("  -> Activities scrap in", delayBeforeMidday / 1000 / 60 / 60, "hours")
+  console.log("  -> Rooms scrap in", delayBeforeNextHour / 1000 / 60, "minutes")
 
   setTimeout(() => {
     modulesScrap()

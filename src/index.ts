@@ -1,12 +1,12 @@
 import "./discord/index"
-import { modulesScrap, startSchedulers } from "./schedulers"
+import { roomsScrap, startSchedulers } from "./schedulers"
 
 // ------ TEST ------
-modulesScrap().then(() => process.exit(0)).catch(e => {
+roomsScrap().then(() => process.exit(0)).catch(e => {
   console.error(e)
   process.exit(1)
 })
 
 // ------ PROD ------
 
-// startSchedulers()
+startSchedulers()
