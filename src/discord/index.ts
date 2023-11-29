@@ -179,6 +179,21 @@ client.on(Events.InteractionCreate, async interaction => {
       promo
     } as SourceUser
 
+    // Check if year is coherent
+    const currentYear = new Date().getFullYear()
+    if (promo.startsWith("TEK")) {
+      const promoYear = parseInt(promo.substring(4, 5))
+      const yearDiff = currentYear - sourceUser.year
+      if (yearDiff < 0 || yearDiff > 5) {
+        await interaction.editReply({ content: "❌ L'année n'est pas cohérente !"})
+        return
+      }
+      if (yearDiff !== promoYear - 1) {
+        await interaction.editReply({ content: "❌ L'année n'est pas cohérente ! Vous ne pouvez pas être en " + promo + " si vous avez commencé en " + sourceUser.year})
+        return
+      }
+    }
+
     const result = await connector.insertOrUpdate(SourceUser, sourceUser, { name: sourceUser.name })
     if (result) {
       if (result.isDiff) {
