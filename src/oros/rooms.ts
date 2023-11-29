@@ -68,13 +68,12 @@ export const fetchRoomsForDate = async (date: Date): Promise<Room[]> => {
         const start = dayjs(activity.start_at).utc().add(sample, 'minutes').toDate()
         const id = Room.computeId(matchingActivity.id, start)
 
-        const newRoom: Room = {
-          activityId: matchingActivity.id,
-          end,
-          id,
-          room,
-          start
-        }
+        const newRoom = new Room()
+        newRoom.activityId = matchingActivity.id
+        newRoom.end = end
+        newRoom.id = id
+        newRoom.room = room
+        newRoom.start = start
         result.push(newRoom)
       }
     }

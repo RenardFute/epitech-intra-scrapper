@@ -1,6 +1,7 @@
 import { IdOf } from "../../utils/types"
 import Activity from "./activity"
 import { SqlType } from "../connector"
+import dayjs from "dayjs"
 
 export enum Rooms {
   COMTE = "Comté",
@@ -66,5 +67,13 @@ export default class Room extends SqlType{
     let computedId = id * 31 + start.getHours() * 31 + start.getMinutes()
     computedId = computedId > 0 ? computedId : -computedId
     return computedId
+  }
+
+  public startToString(): string {
+    return dayjs(this.start).utc().tz('Europe/Paris').format("HH[h]mm")
+  }
+
+  public endToString(): string {
+    return dayjs(this.end).utc().tz('Europe/Paris').format("HH[h]mm")
   }
 }

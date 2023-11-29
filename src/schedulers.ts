@@ -9,6 +9,7 @@ import Room from "./sql/objects/room"
 import { sendModuleUpdateMessage } from "./discord/messages/modules/update"
 import { sendModuleCreatedMessage } from "./discord/messages/modules/new"
 import { sendRoomCreatedMessage } from "./discord/messages/oros/new"
+import { sendRoomUpdateMessage } from "./discord/messages/oros/update"
 
 const modulesScrapFrequency = 1000 * 60 * 60 * 24 * 1 // Each day
 const activitiesScrapFrequency = 1000 * 60 * 60 * 12 // Twice a day
@@ -81,7 +82,7 @@ export const roomsScrap = async (): Promise<ScrapStatistics> => {
     const result = await connector.insertOrUpdate(Room, room, {id: room.id})
     if (result) {
       if (result.isDiff) {
-        // TODO: Notify room update
+        await sendRoomUpdateMessage(result)
         stats.updated++
       }
     } else {

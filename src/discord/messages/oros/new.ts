@@ -53,7 +53,7 @@ export const sendRoomCreatedMessage = async (room: Room) => {
     components: [iosButton, androidButton]
   })
 
-  const image = await createImage(room, activity, module)
+  const image = await createRoomImage(room, activity, module)
 
   // There is small icons, so we don't want to compress the image too much to avoid artifacts and blurriness
   const attachment = new AttachmentBuilder(image.createPNGStream({
@@ -105,7 +105,7 @@ const roomImagesMapping: {[key in Rooms]: string} = {
   [Rooms.VALEURIAD]: "NA.png"
 }
 
-const createImage = async (room: Room, activity: Activity, module: Module) => {
+export const createRoomImage = async (room: Room, activity: Activity, module: Module) => {
   const activityNameSize = 100 + getTextWidthWithStyle(activity.name, 'bold 20px sans-serif')
   const moduleNameSize = 100 + getTextWidthWithStyle(module.name, 'bold 24px sans-serif')
   const image = await loadImage("assets/rooms/" + roomImagesMapping[room.room])
@@ -143,12 +143,12 @@ const createImage = async (room: Room, activity: Activity, module: Module) => {
   // Draw the activity start time
   ctx.font = 'bold 20px sans-serif'
   ctx.fillStyle = '#ffffff'
-  ctx.fillText(dayjs(room.start).utc().tz('Europe/Paris').format("HH[h]mm"), 20, 90)
+  ctx.fillText(room.startToString(), 20, 90)
 
   // Draw the activity end time
   ctx.font = 'bold 20px sans-serif'
   ctx.fillStyle = '#ffffff'
-  ctx.fillText(dayjs(room.end).utc().tz('Europe/Paris').format("HH[h]mm"), 20, 120)
+  ctx.fillText(room.endToString(), 20, 120)
 
   // Draw the room name in the bottom right corner
   ctx.font = 'bold 20px sans-serif'
