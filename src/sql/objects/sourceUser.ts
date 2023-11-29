@@ -21,6 +21,7 @@ export default class SourceUser extends SqlType {
   cookie: string
   year: number
   promo: Promo
+  discordUserId: string
   static databaseName = "source_users"
 
   public constructor() {
@@ -29,6 +30,7 @@ export default class SourceUser extends SqlType {
     this.cookie = ""
     this.year = 0
     this.promo = Promo.TEK_1
+    this.discordUserId = ""
   }
 
 

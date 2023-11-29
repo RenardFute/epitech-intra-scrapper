@@ -171,12 +171,14 @@ client.on(Events.InteractionCreate, async interaction => {
     const cookie = interaction.fields.getField("cookieInput").value as string
     const name = interaction.fields.getField("nameInput").value as string
     const year = interaction.fields.getField("yearInput").value as string
+    const userId = interaction.user.id
 
     const sourceUser = {
       name,
       cookie,
       year: parseInt(year),
-      promo
+      promo,
+      discordUserId: userId
     } as SourceUser
 
     // Check if year is coherent
