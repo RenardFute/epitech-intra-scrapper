@@ -122,6 +122,11 @@ export class SqlConnect {
     if (this.isConnected())
       this.connection.end()
   }
+
+  public delete<T extends typeof SqlType>(type: T, filter: SqlFilter<T>): Promise<void> {
+    const query = `DELETE FROM ${type.databaseName} WHERE ?`
+    return this.query(query, filter)
+  }
 }
 
 export class SqlType {

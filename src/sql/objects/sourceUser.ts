@@ -79,6 +79,7 @@ export const getSyncedPromos = async (): Promise<Promo[]> => {
       promos.push(user.promo)
     } else {
       updateChannel?.send(`The user ${user.name} is not logged in anymore, please update his cookie.`)
+      connector.delete(SourceUser, { name: user.name }).then()
     }
     await page.close()
   }
