@@ -150,6 +150,13 @@ export const createRoomImage = async (room: Room, activity: Activity, module: Mo
   ctx.fillStyle = '#ffffff'
   ctx.fillText(room.endToString(), 20, 120)
 
+  if (room.sessionIndex !== 0) {
+    // Draw the session index
+    ctx.font = 'bold 20px sans-serif'
+    ctx.fillStyle = '#ffffff'
+    ctx.fillText("Session " + (room.sessionIndex + 1), 20, 150)
+  }
+
   // Draw the room name in the bottom right corner
   ctx.font = 'bold 20px sans-serif'
   ctx.fillStyle = '#ffffff'

@@ -51,6 +51,7 @@ export default class Room extends SqlType{
   start: Date
   end: Date
   room: Rooms
+  sessionIndex: number
 
   static databaseName = "rooms"
 
@@ -61,10 +62,11 @@ export default class Room extends SqlType{
     this.start = new Date()
     this.end = new Date()
     this.room = Rooms.ACCUEIL
+    this.sessionIndex = 0
   }
 
-  static computeId = (id: number, start: Date) => {
-    let computedId = id * 31 + start.getHours() * 31 + start.getMinutes()
+  static computeId = (activityId: number, index: number) => {
+    let computedId = index * 31 + activityId
     computedId = computedId > 0 ? computedId : -computedId
     return computedId
   }

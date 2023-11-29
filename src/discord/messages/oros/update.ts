@@ -23,6 +23,9 @@ const formatUpdate = (field: keyof Room, oldValue: any, newValue: any) => {
     case "start":
       emoji = '📆'
       break
+    case "sessionIndex":
+      emoji = '🔢'
+      break
   }
   switch (field) {
     case "id":
@@ -32,6 +35,9 @@ const formatUpdate = (field: keyof Room, oldValue: any, newValue: any) => {
       break
     case "end":
       name = "Date de fin"
+      break
+    case "sessionIndex":
+      name = "Index de session"
       break
   }
   let oldValueFormated = oldValue

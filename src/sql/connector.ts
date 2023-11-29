@@ -54,6 +54,8 @@ export class SqlConnect {
       return `${p1}_${p2.toLowerCase()}`
     })
     query = query.replaceAll(/(?<=WHERE.*)(`[a-z_]+` = (\d+|'([^']|\\')*'))(,)/gm, '$1 AND')
+    if (process.env.SHOW_SQL_QUERIES === "true")
+      console.log(query)
     return new Promise((resolve, reject) => {
       this.connection.query(query, (err, result) => {
         if (err) reject(err)
