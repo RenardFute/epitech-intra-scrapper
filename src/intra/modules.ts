@@ -12,7 +12,7 @@ const parseModule = async (moduleElement: ElementHandle, user: SourceUser): Prom
   const clazz = await moduleElement.evaluate((el) => el.className)
   const nameFull = await exportTextContentOrNA(moduleElement, ":nth-child(9)")
   const name = nameFull.substring(nameFull.indexOf("-") + 1).replace('Roadblock -', '').trim()
-  const semester = await exportNumberContentOrNA(moduleElement, ":nth-child(2)")
+  const semester = await exportNumberContentOrNA(moduleElement, ":nth-child(3)")
   const code = await exportTextContentOrNA(moduleElement, ":nth-child(10)")
   const start = parseDateOrNA((await exportTextContentOrNA(moduleElement, ":nth-child(4)")).substring(4), "D MMM YYYY", true)
   const endRegistration = parseDateOrNA((await exportTextContentOrNA(moduleElement, ":nth-child(5)")).substring(4), "D MMM YYYY", true)
