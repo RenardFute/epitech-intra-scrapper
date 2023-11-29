@@ -1,5 +1,5 @@
 import { Protocol } from "devtools-protocol"
-import connector, { SqlType } from "../connector"
+import connector, { SqlBoolean, SqlType } from "../connector"
 import { Page } from "puppeteer"
 import { browser, getGDPRAcceptCookie, isLoginPage } from "../../intra/utils"
 import { updateChannel } from "../../discord"
@@ -22,6 +22,7 @@ export default class SourceUser extends SqlType {
   year: number
   promo: Promo
   discordUserId: string
+  disabled: SqlBoolean
   static databaseName = "source_users"
 
   public constructor() {
@@ -31,6 +32,7 @@ export default class SourceUser extends SqlType {
     this.year = 0
     this.promo = Promo.TEK_1
     this.discordUserId = ""
+    this.disabled = false
   }
 
 
@@ -43,6 +45,10 @@ export default class SourceUser extends SqlType {
       secure: true,
       value: this.cookie
     }
+  }
+
+  public toString(): string {
+    return this.discordUserId.length > 1 ? '<@' + this.discordUserId + '>' : this.name
   }
 }
 
@@ -69,7 +75,7 @@ export const isUserStillLoggedIn = async (user: SourceUser): Promise<boolean> =>
 }
 
 export const getSyncedPromos = async (): Promise<Promo[]> => {
-  const sourceUsers = await connector.getMany(SourceUser)
+  const sourceUsers = await connector.getMany(SourceUser, { disabled: false })
   const promos = [] as Promo[]
   for (const user of sourceUsers) {
     const b = await browser()
@@ -79,9 +85,10 @@ export const getSyncedPromos = async (): Promise<Promo[]> => {
     await page.setViewport({ width: 1920, height: 1080 })
     if (!await isLoginPage(page)) {
       promos.push(user.promo)
-    } else {
-      updateChannel?.send(`The user ${user.name} is not logged in anymore, please update his cookie.`)
-      connector.delete(SourceUser, { name: user.name }).then()
+    } else if (!user.disabled) {
+      updateChannel?.send(`${user} is not logged in anymore, please update your cookie.`)
+      user.disabled = true
+      await connector.update(SourceUser, user, { discordUserId: user.discordUserId })
     }
     await page.close()
   }

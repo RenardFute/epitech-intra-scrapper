@@ -23,16 +23,17 @@ export default {
       } else {
         validUsers.push(user)
       }
+      await new Promise(resolve => setTimeout(resolve, 250))
     }
 
     const validUsersEmbed = new EmbedBuilder()
       .setTitle("Cookies valides")
-      .setDescription(validUsers.map((user) => `${user.name} - ${user.promo}`).join("\n") || "Aucun cookie valide")
+      .setDescription(validUsers.map((user) => `${user} - ${user.promo}`).join("\n") || "Aucun cookie valide")
       .setColor("#00ff00")
 
     const invalidUsersEmbed = new EmbedBuilder()
       .setTitle("Cookies invalides")
-      .setDescription(invalidUsers.map((user) => `${user.name} - ${user.promo}`).join("\n") || "Aucun cookie invalide")
+      .setDescription(invalidUsers.map((user) => `${user} - ${user.promo}`).join("\n") || "Aucun cookie invalide")
       .setColor("#ff0000")
 
     interaction.editReply({
