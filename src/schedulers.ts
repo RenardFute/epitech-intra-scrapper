@@ -118,4 +118,8 @@ export const startSchedulers = () => {
     roomsScrap().then()
     setInterval(roomsScrap, roomsScrapFrequency)
   }, delayBeforeNextHour)
+
+  setInterval(() => {
+    connector.query("SELECT 1").then()
+  }, 1000 * 60)
 }
