@@ -55,6 +55,10 @@ export default class Room extends SqlType{
 
   static databaseName = "rooms"
 
+  static getEmptyObject() {
+    return new Room()
+  }
+
   constructor() {
     super()
     this.id = 0
@@ -77,5 +81,24 @@ export default class Room extends SqlType{
 
   public endToString(): string {
     return dayjs(this.end).utc().tz('Europe/Paris').format("HH[h]mm")
+  }
+
+  equals(other: Room): boolean {
+    return this.id === other.id &&
+      this.activityId === other.activityId &&
+      this.start.getTime() === other.start.getTime() &&
+      this.end.getTime() === other.end.getTime() &&
+      this.room === other.room &&
+      this.sessionIndex === other.sessionIndex
+  }
+
+  public fromJson(json: any): Room {
+    this.id = json.id
+    this.activityId = json.activityId
+    this.start = new Date(json.start)
+    this.end = new Date(json.end)
+    this.room = json.room
+    this.sessionIndex = json.sessionIndex
+    return this
   }
 }

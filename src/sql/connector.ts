@@ -71,13 +71,19 @@ export class SqlConnect {
     const result = await this.query(query, values)
     const objects = [] as K[]
     for (const row of result) {
-      const object = new type() as K
+      const object = type.getEmptyObject() as K
       for (const key in row) {
         // Revert snake_case
         const trueKey = key.replaceAll(/_([a-z])/gm, (_, p1) => {
           return p1.toUpperCase()
         })
-        object[<keyof K>trueKey] = (trueKey.startsWith('is') || trueKey.startsWith('has')) ? row[key] === 1 : row[key]
+        if (trueKey.startsWith('is') || trueKey.startsWith('has')) {
+          object[<keyof K>trueKey] = (row[key] === 1) as K[keyof K]
+        } else if (trueKey.startsWith('json')) {
+          object[<keyof K>trueKey] = JSON.parse(row[key]) as K[keyof K]
+        } else {
+          object[<keyof K>trueKey] = row[key]
+        }
       }
       objects.push(object)
     }
@@ -94,14 +100,31 @@ export class SqlConnect {
 
   public async insert<T extends typeof SqlType, K extends InstanceType<T>>(type: T, object: K): Promise<void> {
     const query = `INSERT INTO ${type.databaseName} SET ?`
+
+    object = this.prepareObject(object)
     await this.query(query, object)
   }
 
   public async update<T extends typeof SqlType, K extends InstanceType<T>>(type: T, object: K, filter?: SqlFilter<T>): Promise<boolean> {
     const query = `UPDATE ${type.databaseName} SET ? WHERE ?`
+    const old = await this.getOne(type, filter) as K
+    if (!old) return false
 
+    object = this.prepareObject(object)
     const result = await this.query(query, object, filter ?? {})
     return result.changedRows > 0
+  }
+
+  private prepareObject<K>(object: K): K {
+    const duplicate = { ...object }
+    for (const key in duplicate) {
+      if (key.toLowerCase().startsWith('is') || key.toLowerCase().startsWith('has')) {
+        duplicate[<keyof K>key] = (object[<keyof K>key] ? 1 : 0) as K[keyof K]
+      } else if (key.toLowerCase().startsWith('json')) {
+        duplicate[<keyof K>key] = JSON.stringify(object[<keyof K>key]) as K[keyof K]
+      }
+    }
+    return duplicate
   }
 
   public async insertOrUpdate<T extends typeof SqlType, K extends InstanceType<T>>(type: T, object: K, match: SqlFilter<T>): Promise<SqlUpdate<T, K>> {
@@ -111,6 +134,7 @@ export class SqlConnect {
     // If it does, we update it and return the updated object and the old one
     if (results.length > 0) {
       const oldObject = results[0]
+      if (object.equals(oldObject)) return { isDiff: false, oldObject, newObject: object}
       const diff = await this.update(type, object, match)
       return { isDiff: diff, oldObject, newObject: object }
     }
@@ -131,8 +155,12 @@ export class SqlConnect {
   }
 }
 
-export class SqlType {
+export abstract class SqlType {
   static databaseName: string
+  static getEmptyObject: () => SqlType
+
+  abstract equals(other: SqlType): boolean
+  abstract fromJson(json: any): SqlType
 }
 
 export type SqlFilter<T extends abstract new (...args: any) => any> = {
@@ -145,4 +173,5 @@ export type SqlFilter<T extends abstract new (...args: any) => any> = {
 export default new SqlConnect()
 
 export type SqlBoolean = boolean | number
+export type SqlJson = unknown | string
 export type SqlUpdate<T extends typeof SqlType, K extends InstanceType<T>> = { isDiff: boolean, oldObject: K, newObject: K } | void

@@ -3,6 +3,8 @@ import { Protocol } from "devtools-protocol"
 import customParseFormat from "dayjs/plugin/customParseFormat"
 import updateLocale from "dayjs/plugin/updateLocale"
 import dayjs from "dayjs"
+import SourceUser from "../sql/objects/sourceUser"
+import { IdOf } from "../utils/types"
 
 require('dayjs/locale/fr')
 dayjs.extend(customParseFormat)
@@ -18,12 +20,21 @@ export const isLoginPage = async (page: Page): Promise<boolean> => {
   return (await page.$("#auth-login")) !== null
 }
 
-let _browser: Browser | null = null
-export const browser = async (): Promise<Browser> => {
-  if (_browser === null) {
-    _browser = await puppeteer.launch({ headless: "new", args: ['--lang=en-US,en']})
+const _browser: Map<IdOf<SourceUser>, Browser> = new Map()
+const launchingBrowser: Map<IdOf<SourceUser>, boolean> = new Map()
+export const browser = async (user: SourceUser): Promise<Browser> => {
+  if (launchingBrowser.get(user.discordUserId)) {
+    while (launchingBrowser.get(user.discordUserId)) {
+      await new Promise((resolve) => setTimeout(resolve, 100))
+    }
   }
-  return _browser
+  if (!_browser.get(user.discordUserId)) {
+    launchingBrowser.set(user.discordUserId, true)
+    // Slow down puppeteer
+    _browser.set(user.discordUserId, await puppeteer.launch({ headless: "new", args: ['--lang=en-US,en'], protocolTimeout: 60000 }))
+    launchingBrowser.set(user.discordUserId, false)
+  }
+  return _browser.get(user.discordUserId)!
 }
 
 export const getGDPRAcceptCookie = ():Protocol.Network.CookieParam => {

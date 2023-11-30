@@ -23,6 +23,10 @@ export default class Module extends SqlType {
 
   static databaseName = "modules"
 
+  static getEmptyObject() {
+    return new Module()
+  }
+
   constructor() {
     super()
     this.id = 0
@@ -53,5 +57,46 @@ export default class Module extends SqlType {
 
     id = id > 0 ? id : -id
     return id
+  }
+
+  equals(other: Module): boolean {
+    return this.id === other.id &&
+      this.name === other.name &&
+      this.nameFull === other.nameFull &&
+      this.code === other.code &&
+      this.semester === other.semester &&
+      this.year === other.year &&
+      this.city === other.city &&
+      this.credits === other.credits &&
+      this.isOngoing === other.isOngoing &&
+      this.start.getTime() === other.start.getTime() &&
+      this.end.getTime() === other.end.getTime() &&
+      this.isMandatory === other.isMandatory &&
+      this.isRegistrationOpen === other.isRegistrationOpen &&
+      this.endRegistration?.getTime() === other.endRegistration?.getTime() &&
+      this.isRoadblock === other.isRoadblock &&
+      this.promo === other.promo &&
+      this.url === other.url
+  }
+
+  public fromJson(json: any): Module {
+    this.id = json.id
+    this.name = json.name
+    this.nameFull = json.nameFull
+    this.code = json.code
+    this.semester = json.semester
+    this.year = json.year
+    this.city = json.city
+    this.credits = json.credits
+    this.isOngoing = json.isOngoing
+    this.start = new Date(json.start)
+    this.end = new Date(json.end)
+    this.isMandatory = json.isMandatory
+    this.isRegistrationOpen = json.isRegistrationOpen
+    this.endRegistration = json.endRegistration ? new Date(json.endRegistration) : null
+    this.isRoadblock = json.isRoadblock
+    this.promo = json.promo
+    this.url = json.url
+    return this
   }
 }

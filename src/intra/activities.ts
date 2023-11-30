@@ -25,7 +25,7 @@ const parseActivity = async (activityElement: ElementHandle, module: Module): Pr
   const now = new Date()
   const isOngoing = now >= start && now < end
 
-  return {
+  return new Activity().fromJson({
     description,
     end,
     hasMeeting: clazz.indexOf('is-rdv') > -1 || clazz.indexOf('has-rdv') > -1,
@@ -39,7 +39,7 @@ const parseActivity = async (activityElement: ElementHandle, module: Module): Pr
     name,
     start,
     url
-  }
+  })
 }
 
 export const fetchActivitiesForModule = async (module: Module): Promise<Activity[]> => {
