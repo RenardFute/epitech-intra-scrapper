@@ -1,6 +1,10 @@
 import "./discord/index"
-import { startSchedulers } from "./schedulers"
+import { notificationScrap, startSchedulers } from "./schedulers"
 
-// ------ PROD ------
+// ------ DEV ------
 
-startSchedulers()
+if (process.env.NODE_ENV === "development") {
+  notificationScrap().then()
+} else {
+  startSchedulers()
+}

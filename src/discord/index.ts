@@ -4,6 +4,7 @@ import path from "path"
 import * as fs from "fs"
 import SourceUser, { Promo } from "../sql/objects/sourceUser"
 import connector from "../sql/connector"
+import MarkNotification from "../sql/objects/notifications/markNotification"
 
 type CustomClient = Client & { commands: Collection<string, Command> }
 export type Command = { data: SlashCommandBuilder, execute: (client: Client, interaction: any) => Promise<void> }
@@ -178,7 +179,8 @@ client.on(Events.InteractionCreate, async interaction => {
       cookie,
       year: parseInt(year),
       promo,
-      discordUserId: userId
+      discordUserId: userId,
+      disabled: false
     } as SourceUser
 
     // Check if year is coherent
@@ -196,7 +198,7 @@ client.on(Events.InteractionCreate, async interaction => {
       }
     }
 
-    const result = await connector.insertOrUpdate(SourceUser, sourceUser, { name: sourceUser.name })
+    const result = await connector.insertOrUpdate(SourceUser, sourceUser, { discordUserId: sourceUser.discordUserId })
     if (result) {
       if (result.isDiff) {
         await interaction.editReply({ content: "✅ Utilisateur mis à jour !"})
@@ -209,6 +211,25 @@ client.on(Events.InteractionCreate, async interaction => {
   } else {
     await interaction.reply({ content: "❌ Une erreur est survenue !", ephemeral: true })
   }
+})
+
+client.on(Events.InteractionCreate, async interaction => {
+  if (!interaction.isButton())
+    return
+
+  const seeCommentRegex = /see-comment\[(\d+)\]/
+  if (interaction.customId.match(seeCommentRegex)) {
+    await interaction.deferReply({ ephemeral: true })
+    const id = parseInt(interaction.customId.match(seeCommentRegex)![1])
+    const mark = await connector.getOne(MarkNotification, {id})
+    if (!mark) {
+      await interaction.editReply({ content: "❌ Une erreur est survenue !"})
+      return
+    }
+    await interaction.editReply({ content: mark.jsonData.comment})
+    return
+  }
+  interaction.reply({ content: "❌ Une erreur est survenue !", ephemeral: true })
 })
 
 
