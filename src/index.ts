@@ -1,13 +1,16 @@
 import "./discord/index"
-import { modulesScrap, startSchedulers } from "./schedulers"
+import { activitiesScrap, startSchedulers } from "./schedulers"
 
 // ------ DEV ------
 
+(async () => {
+  if (process.env.NODE_ENV === "development") {
+    isDev = true
+    activitiesScrap().then()
+  } else {
+    startSchedulers()
+  }
+})()
+
 export let isDev = false
 
-if (process.env.NODE_ENV === "development") {
-  isDev = true
-  modulesScrap().then()
-} else {
-  startSchedulers()
-}

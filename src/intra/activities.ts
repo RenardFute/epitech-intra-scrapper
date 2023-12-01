@@ -1,25 +1,21 @@
-import SourceUser, { openPageForPromo } from "../sql/objects/sourceUser"
-import { ElementHandle, Page } from "puppeteer"
-import {
-  exportDateContentOrNA,
-  exportTextContentOrNA
-} from "./utils"
+import SourceUser from "../sql/objects/sourceUser"
 import Module from "../sql/objects/module"
 import Activity from "../sql/objects/activity"
+import connector from "../sql/connector"
+import { fetchModuleForUser } from "./scrappers"
+import { activityDTO } from "./dto"
+import dayjs from "dayjs"
 
-const parseActivity = async (activityElement: ElementHandle, module: Module): Promise<Activity> => {
-  const clazz = await activityElement.evaluate((el) => el.className)
-  const name = await exportTextContentOrNA(activityElement, ".acti-title")
-  const start = await exportDateContentOrNA(activityElement, ".main .date span:not(.icon)", "DD/MM/YYYY, HH[h]mm")
-  const end = await exportDateContentOrNA(activityElement, ".main div:nth-of-type(2):is(.date) span:not(.icon)", "DD/MM/YYYY, HH[h]mm")
-  const location = await exportTextContentOrNA(activityElement, ".main .location .label")
-  let description = (await exportTextContentOrNA(activityElement, ".main .description")).trim()
-  const url: string = await activityElement.$(".links .view a").then((el) => el?.evaluate((el) => el.href))
-  const mandatory = await activityElement.$(".main .mandatory").then((el) => el?.evaluate((el) => el.className))
-
-  description = description.replace("Description de l'activité", "").trim()
-  description = description.replaceAll("\t", "").trim()
-  description = description.replace(/\n+/gm, "\n").trim()
+const parseActivity = async (dto: activityDTO, module: Module): Promise<Activity> => {
+  const name = dto.title
+  const start = dayjs(dto.start, "YYYY-MM-DD HH:mm:ss").toDate()
+  const begin = dayjs(dto.begin, "YYYY-MM-DD HH:mm:ss").toDate()
+  const end = dayjs(dto.end, "YYYY-MM-DD HH:mm:ss").toDate()
+  const endRegister = dto.end_register ? dayjs(dto.end_register, "YYYY-MM-DD HH:mm:ss").toDate() : null
+  const deadline = dto.deadline ? dayjs(dto.deadline, "YYYY-MM-DD HH:mm:ss").toDate() : null
+  const location = dto.instance_location
+  const description = dto.description
+  const url: string = module.url + dto.codeacti
 
   // Computed values
   const now = new Date()
@@ -28,27 +24,37 @@ const parseActivity = async (activityElement: ElementHandle, module: Module): Pr
   return new Activity().fromJson({
     description,
     end,
-    hasMeeting: clazz.indexOf('is-rdv') > -1 || clazz.indexOf('has-rdv') > -1,
-    id: Activity.computeId(name, module, url),
-    isGraded: clazz.indexOf('is-note') > -1,
-    isMandatory: mandatory.indexOf('required') > 0,
+    hasMeeting: dto.nb_planified && dto.nb_planified > 0,
+    id: dto.codeacti,
+    isGraded: dto.is_note,
     isOngoing,
-    isProject: clazz.indexOf('is-proj') > -1 || clazz.indexOf('has-proj') > -1,
+    isProject: dto.is_projet,
     location,
     moduleId: module.id,
     name,
     start,
-    url
+    url,
+    begin,
+    deadline,
+    endRegister,
+    type: dto.type_title,
+    mainType: dto.type_code
   })
 }
 
 export const fetchActivitiesForModule = async (module: Module): Promise<Activity[]> => {
-  const binding: { page: Page, user: SourceUser } = await openPageForPromo(module.promo, module.url)
-  const activitiesElements = await binding.page.$$(".activite")
-  const temp = activitiesElements.map(async (activityElement) => {
-    return await parseActivity(activityElement, module)
-  })
-  const activities : Activity[] = (await Promise.all(temp)).filter((m) => m !== null) as Activity[]
-  await binding.page.close()
+  const user = await connector.getOne(SourceUser, { promo: module.promo, disabled: 0 })
+  if (!user) {
+    // TODO: Send error message with discord bot
+    throw new Error("No user found")
+  }
+  const dto = await fetchModuleForUser(user, module)
+  if (!dto.activites)
+    return []
+  const activities: Activity[] = []
+  for (const activityDTO of dto.activites) {
+    const activity = await parseActivity(activityDTO, module)
+    activities.push(activity)
+  }
   return activities
 }

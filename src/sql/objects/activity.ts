@@ -1,7 +1,7 @@
 import { SqlBoolean, SqlType } from "../connector"
 import Module from "./module"
 import { IdOf } from "../../utils/types"
-import { hashCode } from "../../utils/string"
+import { ActivityMainType, ActivityType } from "../../intra/dto"
 
 
 export default class Activity extends SqlType {
@@ -11,13 +11,18 @@ export default class Activity extends SqlType {
   isOngoing: SqlBoolean
   start: Date
   end: Date
-  isMandatory: SqlBoolean
   location: string
   description: string
   isProject: boolean
   isGraded: SqlBoolean
   hasMeeting: SqlBoolean
   url: string
+  deadline: Date | null
+  begin: Date
+  endRegister: Date | null
+  type: ActivityType
+  mainType: ActivityMainType
+
 
   static databaseName = "activities"
 
@@ -33,22 +38,17 @@ export default class Activity extends SqlType {
     this.isOngoing = false
     this.start = new Date()
     this.end = new Date()
-    this.isMandatory = false
     this.location = ""
     this.description = ""
     this.isProject = false
     this.isGraded = false
     this.hasMeeting = false
     this.url = ""
-  }
-
-  static computeId(name: string, module: Module, url: string): number {
-    let id = hashCode(name)
-    id = id * 31 + module.id
-    id = id * 31 + hashCode(url)
-
-    id = id > 0 ? id : -id
-    return id
+    this.deadline = null
+    this.begin = new Date()
+    this.endRegister = null
+    this.type = "Project"
+    this.mainType = "other"
   }
 
   equals(other: Activity): boolean {
@@ -58,13 +58,17 @@ export default class Activity extends SqlType {
       this.isOngoing === other.isOngoing &&
       this.start.getTime() === other.start.getTime() &&
       this.end.getTime() === other.end.getTime() &&
-      this.isMandatory === other.isMandatory &&
       this.location === other.location &&
       this.description === other.description &&
       this.isProject === other.isProject &&
       this.isGraded === other.isGraded &&
       this.hasMeeting === other.hasMeeting &&
-      this.url === other.url
+      this.url === other.url &&
+      this.deadline?.getTime() === other.deadline?.getTime() &&
+      this.begin.getTime() === other.begin.getTime() &&
+      this.endRegister?.getTime() === other.endRegister?.getTime() &&
+      this.type === other.type &&
+      this.mainType === other.mainType
   }
 
   public fromJson(json: any): Activity {
@@ -74,13 +78,17 @@ export default class Activity extends SqlType {
     this.isOngoing = json.isOngoing
     this.start = new Date(json.start)
     this.end = new Date(json.end)
-    this.isMandatory = json.isMandatory
     this.location = json.location
     this.description = json.description
     this.isProject = json.isProject
     this.isGraded = json.isGraded
     this.hasMeeting = json.hasMeeting
     this.url = json.url
+    this.deadline = json.deadline ? new Date(json.deadline) : null
+    this.begin = new Date(json.begin)
+    this.endRegister = json.endRegister ? new Date(json.endRegister) : null
+    this.type = json.type
+    this.mainType = json.mainType
     return this
   }
 }

@@ -98,22 +98,10 @@ export default class SourceUser extends SqlType {
     this.disabled = json.disabled
     return this
   }
-}
 
-export const openPageForPromo = async (promo: Promo, url: string): Promise<{ page: Page, user: SourceUser }> => {
-  const user = await connector.getOne(SourceUser, { promo: promo })
-  if (!user) {
-    throw new Error("User not found")
+  public getModules(): Promise<Module[]> {
+    return connector.getMany(Module, { promo: this.promo })
   }
-  const b = await browser(user)
-  const page = await b.newPage()
-  if (user === null) {
-    throw new Error("User not found")
-  }
-  await page.setCookie(getGDPRAcceptCookie(), user.buildConnectionCookie())
-  await page.goto(url)
-  await page.setViewport({ width: 1920, height: 1080 })
-  return {page, user}
 }
 
 export const openPageForUser = async (user: SourceUser, url: string): Promise<Page> => {

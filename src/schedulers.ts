@@ -70,8 +70,6 @@ export const activitiesScrap = async (): Promise<ScrapStatistics> => {
         stats.inserted++
       }
     }
-    // Wait a bit to avoid getting banned
-    await new Promise((resolve) => setTimeout(resolve, 250))
   }
   stats.time = Date.now() - stats.time
   console.log("Activities scrap done", new Date().toLocaleString(), stats)
