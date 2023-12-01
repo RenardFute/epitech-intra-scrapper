@@ -1,4 +1,3 @@
-import { Protocol } from "devtools-protocol"
 import connector, { SqlBoolean, SqlType } from "../connector"
 import { updateChannel } from "../../discord"
 import Activity from "./activity"
@@ -37,18 +36,6 @@ export default class SourceUser extends SqlType {
     this.promo = Promo.TEK_1
     this.discordUserId = ""
     this.disabled = false
-  }
-
-
-  public buildConnectionCookie(): Protocol.Network.CookieParam {
-    return {
-      name: 'user',
-      path: '/',
-      domain: 'intra.epitech.eu',
-      httpOnly: true,
-      secure: true,
-      value: this.cookie
-    }
   }
 
   public toString(): string {
