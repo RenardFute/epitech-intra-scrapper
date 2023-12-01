@@ -1,15 +1,11 @@
 import "./discord/index"
 import { startSchedulers } from "./schedulers"
 
-// ------ DEV ------
+export const isDev = process.env.NODE_ENV === "development";
 
 (async () => {
-  if (process.env.NODE_ENV === "development") {
-    isDev = true
-  } else {
+  if (!isDev) {
     startSchedulers()
   }
 })()
-
-export let isDev = false
 
