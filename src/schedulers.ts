@@ -15,9 +15,7 @@ import { getNotificationTypeFromEnum, NotificationType } from "./sql/objects/not
 import MarkNotification from "./sql/objects/notifications/markNotification"
 import sendNewMarkNotification from "./discord/messages/notifications/mark/new"
 
-const modulesScrapFrequency = 1000 * 60 * 60 * 24 * 1 // Each day
-const activitiesScrapFrequency = 1000 * 60 * 60 * 12 // Twice a day
-const roomsScrapFrequency = 1000 * 60 * 60 // Each hour
+const hourFrequency = 1000 * 60 * 60 // Each hour
 
 type ScrapStatistics = { fetched: number, inserted: number, updated: number, deleted: number, time: number }
 
@@ -129,32 +127,24 @@ export const notificationScrap = async (): Promise<ScrapStatistics> => {
 }
 
 export const startSchedulers = () => {
-  const delayBeforeMidnight = 1000 * 60 * 60 * 24 - (Date.now() % (1000 * 60 * 60 * 24))
-  const delayBeforeMidday = 1000 * 60 * 60 * 12 - (Date.now() % (1000 * 60 * 60 * 12))
   const delayBeforeNextHour = 1000 * 60 * 60 - (Date.now() % (1000 * 60 * 60))
 
   console.log("Schedulers started", new Date().toLocaleString())
-  console.log("  -> Modules scrap in", delayBeforeMidnight / 1000 / 60 / 60, "hours")
-  console.log("  -> Activities scrap in", delayBeforeMidday / 1000 / 60 / 60, "hours")
-  console.log("  -> Rooms & Notifications scrap in", delayBeforeNextHour / 1000 / 60, "minutes")
+  console.log("  -> Next hour in", delayBeforeNextHour / 1000 / 60, "minutes")
 
   setTimeout(() => {
     modulesScrap().then()
-    setInterval(modulesScrap, modulesScrapFrequency)
-  }, delayBeforeMidnight)
+    setInterval(modulesScrap, hourFrequency)
+  }, delayBeforeNextHour)
 
   setTimeout(() => {
     activitiesScrap().then()
-    setInterval(activitiesScrap, activitiesScrapFrequency)
-  }, delayBeforeMidday)
+    setInterval(activitiesScrap, hourFrequency)
+  }, delayBeforeNextHour)
 
   setTimeout(() => {
     roomsScrap().then()
-    notificationScrap().then()
-    setInterval(async () => {
-      await roomsScrap()
-      await notificationScrap()
-    }, roomsScrapFrequency)
+    setInterval(notificationScrap, hourFrequency)
   }, delayBeforeNextHour)
 
   setInterval(() => {

@@ -5,7 +5,7 @@ import { ActivityMainType, ActivityType } from "../../intra/dto"
 
 
 export default class Activity extends SqlType {
-  id: number
+  id: string
   moduleId: IdOf<Module>
   name: string
   isOngoing: SqlBoolean
@@ -32,7 +32,7 @@ export default class Activity extends SqlType {
 
   constructor() {
     super()
-    this.id = 0
+    this.id = "acti-xxxx"
     this.moduleId = 0
     this.name = ""
     this.isOngoing = false

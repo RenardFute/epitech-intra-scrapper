@@ -50,13 +50,14 @@ export const fetchRoomsForDate = async (date: Date): Promise<Room[]> => {
     for (const room of Object.keys(place) as Rooms[]) {
       const activities = place[room].activities
       let index = 0
+      let oldActivity: Activity | null = null
       for (const activity of activities) {
         const matchingActivities = await connector.getMany(Activity, {
           name: activity.activity_title
         })
 
         if (!matchingActivities) {
-          index++
+          index = 0
           continue
         }
         const matchingActivity = await findAsyncSequential(matchingActivities, async (a) => {
@@ -66,8 +67,13 @@ export const fetchRoomsForDate = async (date: Date): Promise<Room[]> => {
         })
 
         if (!matchingActivity) {
-          index++
+          index = 0
           continue
+        }
+        if (oldActivity && oldActivity.equals(matchingActivity)) {
+          index++
+        } else {
+          index = 0
         }
 
         const sample = dayjs().tz('Europe/Paris').toDate().getTimezoneOffset()
@@ -83,7 +89,8 @@ export const fetchRoomsForDate = async (date: Date): Promise<Room[]> => {
         newRoom.start = start
         newRoom.sessionIndex = index
         result.push(newRoom)
-        index++
+
+        oldActivity = matchingActivity
       }
     }
   }

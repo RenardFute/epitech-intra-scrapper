@@ -21,7 +21,7 @@ export default class MarkNotification extends Notification {
     this.jsonData = {
       mark: 0,
       comment: "",
-      activityId: 0,
+      activityId: "acti-xxxx",
       grader: "",
       progress: 0
     }

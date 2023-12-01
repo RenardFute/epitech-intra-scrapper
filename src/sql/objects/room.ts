@@ -46,7 +46,7 @@ export enum Rooms {
 }
 
 export default class Room extends SqlType{
-  id: number
+  id: string
   activityId: IdOf<Activity>
   start: Date
   end: Date
@@ -61,18 +61,16 @@ export default class Room extends SqlType{
 
   constructor() {
     super()
-    this.id = 0
-    this.activityId = 0
+    this.id = "room-xxxx-0"
+    this.activityId = "acti-xxxx"
     this.start = new Date()
     this.end = new Date()
     this.room = Rooms.ACCUEIL
     this.sessionIndex = 0
   }
 
-  static computeId = (activityId: number, index: number) => {
-    let computedId = index * 31 + activityId
-    computedId = computedId > 0 ? computedId : -computedId
-    return computedId
+  static computeId = (activityId: IdOf<Activity>, index: number): IdOf<Room> => {
+    return (activityId + "-" + index).replace("acti-", "room-")
   }
 
   public startToString(): string {
