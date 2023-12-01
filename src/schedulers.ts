@@ -80,8 +80,9 @@ export const activitiesScrap = async (): Promise<ScrapStatistics> => {
 
 export const roomsScrap = async (): Promise<ScrapStatistics> => {
   const stats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
-  const rooms = await fetchRoomsForDate(new Date())
+  let rooms = await fetchRoomsForDate(new Date())
   stats.fetched = rooms.length
+  rooms = rooms.sort((a, b) => a.start.getTime() - b.start.getTime())
   for (const room of rooms) {
     const result = await connector.insertOrUpdate(Room, room, {id: room.id})
     if (result) {
@@ -159,6 +160,11 @@ export const startSchedulers = () => {
   }, delayBeforeNextHour)
 
   setInterval(() => {
-    connector.query("SELECT 1").then()
+    try {
+      connector.query("SELECT 1").then()
+    } catch (e) {
+      console.error("DB connection lost", new Date().toLocaleString())
+      console.error(e)
+    }
   }, 1000 * 60)
 }

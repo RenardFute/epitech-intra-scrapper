@@ -7,6 +7,7 @@ import fs from "fs"
 import dayjs from "dayjs"
 import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle } from "discord.js"
 import Activity from "../../../../sql/objects/activity"
+import { isDev } from "../../../../index"
 
 export default async function sendNewMarkNotification(mark: MarkNotification): Promise<any> {
   if (mark.notified)
@@ -41,13 +42,14 @@ export default async function sendNewMarkNotification(mark: MarkNotification): P
     resolution: 400,
   }), { name: 'module.png' })
 
-  updateChannel?.guild.members.fetch(mark.userId).then((member) => {
+  updateChannel?.guild.members.fetch(isDev ? "226501209148620802" : mark.userId).then((member) => {
     member.send({
       files: [attachment],
       components: [actionRow]
     }).then(() => {
       mark.notified = true
       connector.update(MarkNotification, mark, {id: mark.id})
+      member.send({ content: "**🚧 DEV**\n```Json\n" + JSON.stringify(mark, null, 2) + "```" })
     })
   })
 }

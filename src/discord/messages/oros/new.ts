@@ -6,11 +6,12 @@ import Module from "../../../sql/objects/module"
 import assert from "assert"
 import { getTextWidthWithStyle } from "../../utils/text"
 import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle } from "discord.js"
-import { updateChannel } from "../../index"
+import { devChannel, updateChannel } from "../../index"
 import { promoMapping } from "../../utils/mappings"
 import dayjs from "dayjs"
 import timezone from "dayjs/plugin/timezone"
 import utc from "dayjs/plugin/utc"
+import { isDev } from "../../../index"
 dayjs.extend(timezone)
 dayjs.extend(utc)
 
@@ -60,7 +61,12 @@ export const sendRoomCreatedMessage = async (room: Room) => {
     compressionLevel: 0,
     resolution: 400,
   }), { name: 'room.png' })
-  await updateChannel?.send({ files: [attachment] , components: [row, downloadRow], content: "<@&" + promoMapping[module.promo] + "> Activité planifié !" })
+
+  const channel = isDev ? devChannel : updateChannel
+  if (isDev)
+    devChannel?.send({ content: '**🚧 DEV**\n```Json\n' + JSON.stringify(room, null, 2) + '```' })
+
+  await channel?.send({ files: [attachment] , components: [row, downloadRow], content: "<@&" + promoMapping[module.promo] + "> Activité planifié !" })
 }
 
 const roomImagesMapping: {[key in Rooms]: string} = {

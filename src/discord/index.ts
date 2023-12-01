@@ -65,6 +65,7 @@ registerCommands().then()
 client.once(Events.ClientReady, c => {
   console.log(`Logged in as ${c.user?.tag}!`)
   updateChannel = c.channels.cache.get(process.env.DISCORD_UPDATE_CHANNEL_ID ?? '') as TextChannel
+  devChannel = c.channels.cache.get(process.env.DISCORD_DEV_CHANNEL_ID ?? '') as TextChannel
 
   // Set a status (activity) for the bot
   const activity: ActivityOptions = {
@@ -237,3 +238,4 @@ client.on(Events.InteractionCreate, async interaction => {
 client.login(process.env.DISCORD_TOKEN).then()
 
 export let updateChannel: TextChannel | undefined = undefined
+export let devChannel: TextChannel | undefined = undefined

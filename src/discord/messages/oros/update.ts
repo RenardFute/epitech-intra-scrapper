@@ -1,7 +1,7 @@
 import connector, { SqlUpdate } from "../../../sql/connector"
 import Module from "../../../sql/objects/module"
 import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from "discord.js"
-import { updateChannel } from "../../index"
+import { devChannel, updateChannel } from "../../index"
 import assert from "assert"
 import { promoMapping } from "../../utils/mappings"
 import dayjs from "dayjs"
@@ -10,6 +10,7 @@ import Activity from "../../../sql/objects/activity"
 import timezone from "dayjs/plugin/timezone"
 import utc from "dayjs/plugin/utc"
 import { createRoomImage } from "./new"
+import { isDev } from "../../../index"
 dayjs.extend(timezone)
 dayjs.extend(utc)
 
@@ -127,7 +128,12 @@ export const sendRoomUpdateMessage = async (update: SqlUpdate<any, Room>) => {
           compressionLevel: 0,
           resolution: 400,
         }), { name: 'room.png' })
-        await updateChannel?.send({ files: [attachment] , components: [row], content: "<@&" + promoMapping[module.promo] + "> Changement de salle !" })
+
+        const channel = isDev ? devChannel : updateChannel
+        if (isDev)
+          devChannel?.send({ content: '**🚧 DEV**\n```Json\n' + JSON.stringify(update, null, 2) + '```' })
+        await channel?.send({ files: [attachment] , components: [row], content: "<@&" + promoMapping[module.promo] + "> Changement de salle !" })
+
         return
       }
       updates.push(formatUpdate(key, oldValue, newValue))

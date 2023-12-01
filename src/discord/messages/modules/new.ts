@@ -1,11 +1,12 @@
 import Module from "../../../sql/objects/module"
 import { ButtonBuilder, EmbedBuilder, ButtonStyle, ActionRowBuilder, AttachmentBuilder } from "discord.js"
-import { updateChannel } from "../../index"
+import { devChannel, updateChannel } from "../../index"
 import { promoMapping } from "../../utils/mappings"
 import dayjs from "dayjs"
 import * as fs from "fs"
 import { getTextWidthWithStyle } from "../../utils/text"
 import { createCanvas, loadImage } from "canvas"
+import { isDev } from "../../../index"
 
 export const sendModuleCreatedMessage = async (newModule: Module) => {
   const embed = new EmbedBuilder()
@@ -87,7 +88,11 @@ export const sendModuleCreatedMessage = async (newModule: Module) => {
     compressionLevel: 0,
     resolution: 400,
   }), { name: 'module.png' })
-  await updateChannel?.send({ files: [attachment] , components: [row], content: "<@&" + promoMapping[newModule.promo] + "> Nouveau module !" })
+
+  const channel = isDev ? devChannel : updateChannel
+  if (isDev)
+    devChannel?.send({ content: '**🚧 DEV**\n```Json\n' + JSON.stringify(newModule, null, 2) + '```' })
+  await channel?.send({ files: [attachment] , components: [row], content: "<@&" + promoMapping[newModule.promo] + "> Nouveau module !" })
 }
 
 const createImage = async (module: Module) => {
