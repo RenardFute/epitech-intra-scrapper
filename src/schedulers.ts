@@ -1,4 +1,4 @@
-import SourceUser, { getSyncedPromos } from "./sql/objects/sourceUser"
+import { getSyncedPromos } from "./sql/objects/sourceUser"
 import { fetchModulesForPromo } from "./intra/modules"
 import connector from "./sql/connector"
 import Module from "./sql/objects/module"
@@ -10,10 +10,6 @@ import { sendModuleUpdateMessage } from "./discord/messages/modules/update"
 import { sendModuleCreatedMessage } from "./discord/messages/modules/new"
 import { sendRoomCreatedMessage } from "./discord/messages/oros/new"
 import { sendRoomUpdateMessage } from "./discord/messages/oros/update"
-import { fetchNotificationForUser } from "./intra/notification"
-import { getNotificationTypeFromEnum, NotificationType } from "./sql/objects/notifications/notification"
-import MarkNotification from "./sql/objects/notifications/markNotification"
-import sendNewMarkNotification from "./discord/messages/notifications/mark/new"
 
 const hourFrequency = 1000 * 60 * 60 // Each hour
 
@@ -96,36 +92,6 @@ export const roomsScrap = async (): Promise<ScrapStatistics> => {
   return stats
 }
 
-export const notificationScrap = async (): Promise<ScrapStatistics> => {
-  const stats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
-  const sourceUsers = await connector.getMany(SourceUser, {disabled: 0})
-  for (const user of sourceUsers) {
-    const notifications = await fetchNotificationForUser(user)
-    stats.fetched += notifications.length
-    for (const n of notifications) {
-      const result = await connector.insertOrUpdate(getNotificationTypeFromEnum(n.notificationType), n, {id: n.id})
-      if (result) {
-        if (result.isDiff) {
-          // TODO: Notify activity update
-          stats.updated++
-        }
-      } else {
-        switch (n.notificationType) {
-          case NotificationType.NEW_MARK:
-            await sendNewMarkNotification(n as MarkNotification)
-            break
-          default:
-            throw new Error("Unknown notification type")
-        }
-        stats.inserted++
-      }
-    }
-  }
-  stats.time = Date.now() - stats.time
-  console.log("Notifications scrap done", new Date().toLocaleString(), stats)
-  return stats
-}
-
 export const startSchedulers = () => {
   const delayBeforeNextHour = 1000 * 60 * 60 - (Date.now() % (1000 * 60 * 60))
 
@@ -144,7 +110,7 @@ export const startSchedulers = () => {
 
   setTimeout(() => {
     roomsScrap().then()
-    setInterval(notificationScrap, hourFrequency)
+    setInterval(roomsScrap, hourFrequency)
   }, delayBeforeNextHour)
 
   setInterval(() => {

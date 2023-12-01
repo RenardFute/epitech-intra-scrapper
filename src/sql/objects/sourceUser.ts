@@ -1,7 +1,5 @@
 import { Protocol } from "devtools-protocol"
 import connector, { SqlBoolean, SqlType } from "../connector"
-import { Page } from "puppeteer"
-import { browser, getGDPRAcceptCookie, isLoginPage } from "../../intra/utils"
 import { updateChannel } from "../../discord"
 import Activity from "./activity"
 import Module from "./module"
@@ -57,10 +55,6 @@ export default class SourceUser extends SqlType {
     return this.isDiscordBound() ? '<@' + this.discordUserId + '>' : this.name
   }
 
-  public openPage(url: string): Promise<Page> {
-    return openPageForUser(this, url)
-  }
-
   public isDiscordBound(): boolean {
     return this.discordUserId.length > 1
   }
@@ -104,50 +98,37 @@ export default class SourceUser extends SqlType {
   }
 }
 
-export const openPageForUser = async (user: SourceUser, url: string): Promise<Page> => {
-  const b = await browser(user)
-  const page = await b.newPage()
-  await page.setCookie(getGDPRAcceptCookie(), user.buildConnectionCookie())
-  await page.goto(url)
-  await page.setViewport({ width: 1920, height: 1080 })
-  return page
-}
-
 export const isUserStillLoggedIn = async (user: SourceUser): Promise<boolean> => {
-  const b = await browser(user)
-  const page = await b.newPage()
-  await page.setCookie(getGDPRAcceptCookie(), user.buildConnectionCookie())
-  await page.goto('https://intra.epitech.eu')
-  await page.setViewport({ width: 1920, height: 1080 })
-  const r: boolean = !await isLoginPage(page)
-  if (!r) {
+  const r = await fetch('https://intra.epitech.eu?format=json', {
+    headers: {
+      'Cookie': 'user=' + user.cookie
+    }
+  })
+  const json = await r.json() as any
+  const isLoggedOut = 'message' in json && json.message === 'Veuillez vous connecter'
+  if (isLoggedOut) {
     user.disabled = true
+    console.log(json)
     await connector.update(SourceUser, user, { discordUserId: user.discordUserId })
   } else {
     user.disabled = false
     await connector.update(SourceUser, user, { discordUserId: user.discordUserId })
   }
-  await page.close()
-  return r
+  return !isLoggedOut
 }
 
 export const getSyncedPromos = async (): Promise<Promo[]> => {
-  const sourceUsers = await connector.getMany(SourceUser, { disabled: false })
+  const sourceUsers = await connector.getMany(SourceUser)
   const promos = [] as Promo[]
   for (const user of sourceUsers) {
-    const b = await browser(user)
-    const page = await b.newPage()
-    await page.setCookie(getGDPRAcceptCookie(), user.buildConnectionCookie())
-    await page.goto("https://intra.epitech.eu")
-    await page.setViewport({ width: 1920, height: 1080 })
-    if (!await isLoginPage(page)) {
+    const isLogged = await isUserStillLoggedIn(user)
+    if (isLogged) {
       promos.push(user.promo)
-    } else if (!user.disabled) {
+    } else {
       updateChannel?.send(`${user} is not logged in anymore, please update your cookie.`)
       user.disabled = true
       await connector.update(SourceUser, user, { discordUserId: user.discordUserId })
     }
-    await page.close()
   }
   return promos.filter((promo, index, self) => self.indexOf(promo) === index)
 }
