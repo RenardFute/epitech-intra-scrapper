@@ -46,7 +46,7 @@ const parseModule = async (dto: moduleDTO, source: SourceUser): Promise<Module |
   })
 }
 
-export const fetchModulesForPromo = async (promo: Promo): Promise<Module[]> => {
+export const scrapModulesForPromo = async (promo: Promo): Promise<Module[]> => {
   const user = await connector.getOne(SourceUser, { promo: promo, disabled: 0 })
   if (!user) {
     // TODO: Send error message with discord bot

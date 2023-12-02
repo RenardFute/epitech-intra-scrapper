@@ -1,4 +1,4 @@
-import Room, { Rooms } from "../sql/objects/room"
+import Room from "../sql/objects/room"
 import connector from "../sql/connector"
 import Activity from "../sql/objects/activity"
 import Module from "../sql/objects/module"
@@ -6,42 +6,14 @@ import { findAsyncSequential } from "../utils/arrays"
 import dayjs from "dayjs"
 import timezone from "dayjs/plugin/timezone"
 import utc from "dayjs/plugin/utc"
+import { Rooms } from "../intra/dto"
+import { fetchRoomsForDay } from "../intra/scrappers"
 dayjs.extend(timezone)
 dayjs.extend(utc)
 
 
-type RoomDTO = Array<{
-  name: string,
-  hide_if_free: boolean,
-  rooms: {
-    [key in Rooms]: {
-      activities: Array<{
-        activity_title: string,
-        start_at: number,
-        end_at: number,
-        oros_tags: any[],
-        type?: string,
-      }>,
-      force_closed?: boolean,
-      force_closed_message?: string,
-      french_gender?: 'masculine' | 'feminine'
-    }
-  }
-}>
-
-export const fetchRoomsForDate = async (date: Date): Promise<Room[]> => {
-  const url ="https://api.oros.dahobul.com/rooms-activities?from=" + date.toISOString().split("T")[0] + "&to=" + date.toISOString().split("T")[0]
-  const data: RoomDTO | undefined = await fetch(url)
-    .then((res) => res.json())
-    .then((res) => {
-      return res as RoomDTO
-    })
-    .catch((err) => {
-      console.error(err)
-      return undefined
-    })
-
-  if (!data) return []
+export const scrapRoomsForDate = async (date: Date): Promise<Room[]> => {
+  const data = await fetchRoomsForDay(date)
 
   const rooms = data.map((o) => o.rooms).flat()
   const result = [] as Room[]

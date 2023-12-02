@@ -42,7 +42,7 @@ const parseActivity = async (dto: activityDTO, module: Module): Promise<Activity
   })
 }
 
-export const fetchActivitiesForModule = async (module: Module): Promise<Activity[]> => {
+export const scrapActivitiesForModule = async (module: Module): Promise<Activity[]> => {
   const user = await connector.getOne(SourceUser, { promo: module.promo, disabled: 0 })
   if (!user) {
     // TODO: Send error message with discord bot

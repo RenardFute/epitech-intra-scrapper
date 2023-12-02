@@ -94,7 +94,6 @@ export const userCodec = t.intersection([t.type({
   picture: t.union([t.string, t.null]),
 }), partialUserCodec])
 
-
 export const ActivityTypeCodec = t.union([
   t.literal("Review"),
   t.literal("Defense"),
@@ -145,7 +144,6 @@ export const ActivityMainTypeCodec = t.union([
 
 export const openCloseCodec = t.union([t.literal("open"), t.literal("close")])
 export const userStatusCodec = t.union([t.literal("present"), t.literal("absent"), t.literal("N/A")])
-
 
 export const projectCodec = t.type({
   id: t.number,
@@ -212,6 +210,7 @@ export const activityCodec = t.type({
   project: t.union([projectCodec, t.null]),
   events: t.array(eventCodec),
 })
+
 export const detailedModuleCodec = t.type({
   scolaryear: t.string,
   codemodule: t.string,
@@ -250,6 +249,66 @@ export const detailedModuleCodec = t.type({
   activites: t.array(activityCodec),
 })
 
+export const RoomsCodec = t.union([
+    t.literal("Comté"),
+    t.literal("Mordor"),
+    t.literal("Torvalds"),
+    t.literal("Gallifrey"),
+    t.literal("Bourg Palette"),
+    t.literal("Gotham"),
+    t.literal("Hub Innovation"),
+    t.literal("Poudlard"),
+    t.literal("Tatooine"),
+    t.literal("Vogons"),
+    t.literal("Westeros"),
+    t.literal("Kamar-Taj"),
+    t.literal("Accueil"),
+    t.literal("Barney Stinson"),
+    t.literal("Cafétéria"),
+    t.literal("Foyer"),
+    t.literal("Hall"),
+    t.literal("Marty McFly"),
+    t.literal("Nether"),
+    t.literal("Petit Bureau Pédagogie"),
+    t.literal("Visio Teams"),
+    t.literal("Salle 105"),
+    t.literal("Salle 106"),
+    t.literal("Salle 111"),
+    t.literal("Salle 111-A"),
+    t.literal("Salle 111-B"),
+    t.literal("Salle 112"),
+    t.literal("Salle 112-A"),
+    t.literal("Salle 112-B"),
+    t.literal("Salle 114"),
+    t.literal("Salle 115"),
+    t.literal("Amphithéâtre"),
+    t.literal("Salle 20"),
+    t.literal("Salle L1 à L8"),
+    t.literal("Extérieur"),
+    t.literal("Cité des Congrès"),
+    t.literal("La Cantine - Hall 6"),
+    t.literal("Le Palace - Place Graslin"),
+    t.literal("Valeuriad - 14 rue François Evellin")
+])
+
+export const RoomCodex = t.type({
+  name: t.string,
+  hide_if_free: t.boolean,
+  rooms: t.record(RoomsCodec, t.type({
+      activities: t.array(t.type({
+        activity_title: t.string,
+        start_at: t.number,
+        end_at: t.number,
+        oros_tags: t.array(t.unknown),
+        type: t.union([ActivityMainTypeCodec, t.undefined]),
+      })),
+      force_closed: t.union([t.boolean, t.undefined]),
+      force_closed_message:  t.union([t.string, t.undefined]),
+      french_gender: t.union([t.union([t.literal('masculine'), t.literal('feminine')]), t.undefined])
+    })
+  )
+})
+
 export type detailedModuleDTO = t.TypeOf<typeof detailedModuleCodec>
 export type userDTO = t.TypeOf<typeof userCodec>
 export type activityDTO = t.TypeOf<typeof activityCodec>
@@ -258,3 +317,5 @@ export type projectDTO = t.TypeOf<typeof projectCodec>
 export type moduleDTO = t.TypeOf<typeof moduleCodec>
 export type ActivityType = t.TypeOf<typeof ActivityTypeCodec>
 export type ActivityMainType = t.TypeOf<typeof ActivityMainTypeCodec>
+export type RoomDTO = t.TypeOf<typeof RoomCodex>
+export type Rooms = t.TypeOf<typeof RoomsCodec>

@@ -1,10 +1,10 @@
 import { getSyncedPromos } from "./sql/objects/sourceUser"
-import { fetchModulesForPromo } from "./intra/modules"
+import { scrapModulesForPromo } from "./intra/modules"
 import connector from "./sql/connector"
 import Module from "./sql/objects/module"
-import { fetchActivitiesForModule } from "./intra/activities"
+import { scrapActivitiesForModule } from "./intra/activities"
 import Activity from "./sql/objects/activity"
-import { fetchRoomsForDate } from "./oros/rooms"
+import { scrapRoomsForDate } from "./oros/rooms"
 import Room from "./sql/objects/room"
 import { sendModuleUpdateMessage } from "./discord/messages/modules/update"
 import { sendModuleCreatedMessage } from "./discord/messages/modules/new"
@@ -21,7 +21,7 @@ export const modulesScrap = async (): Promise<ScrapStatistics> => {
 
   for (const promo of syncedPromos) {
     const stats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
-    const modules = await fetchModulesForPromo(promo)
+    const modules = await scrapModulesForPromo(promo)
     stats.fetched = modules.length
     for (const m of modules) {
       const result = await connector.insertOrUpdate(Module, m, {id: m.id})
@@ -50,7 +50,7 @@ export const activitiesScrap = async (): Promise<ScrapStatistics> => {
   const modulesSynced = await connector.getMany(Module, {isOngoing: 1})
   const stats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
   for (const module of modulesSynced) {
-    const activities = await fetchActivitiesForModule(module)
+    const activities = await scrapActivitiesForModule(module)
     stats.fetched += activities.length
     for (const a of activities) {
       const result = await connector.insertOrUpdate(Activity, a, {id: a.id})
@@ -72,7 +72,7 @@ export const activitiesScrap = async (): Promise<ScrapStatistics> => {
 
 export const roomsScrap = async (): Promise<ScrapStatistics> => {
   const stats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
-  let rooms = await fetchRoomsForDate(new Date())
+  let rooms = await scrapRoomsForDate(new Date())
   stats.fetched = rooms.length
   rooms = rooms.sort((a, b) => a.start.getTime() - b.start.getTime())
   for (const room of rooms) {
