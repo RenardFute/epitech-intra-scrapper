@@ -5,7 +5,7 @@ module.exports = {
   },
   extends: [
     "eslint:recommended",
-    "plugin:@typescript-eslint/recommended"
+    "plugin:@typescript-eslint/recommended",
   ],
   overrides: [
     {
@@ -26,7 +26,8 @@ module.exports = {
     sourceType: "module"
   },
   plugins: [
-    "@typescript-eslint"
+    "@typescript-eslint",
+    "eslint-plugin-tsdoc"
   ],
   rules: {
     '@typescript-eslint/no-unused-vars': ['error', { args: 'all', argsIgnorePattern: '^_' }],
@@ -54,7 +55,8 @@ module.exports = {
     '@typescript-eslint/no-namespace': 'off',
     '@typescript-eslint/triple-slash-reference': 'off',
     indent: ['error', 2, { SwitchCase: 1 }],
-    semi: ['error', 'never']
+    semi: ['error', 'never'],
+    "tsdoc/syntax": "warn"
   },
   settings: {
     'import/parsers': {
