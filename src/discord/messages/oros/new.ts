@@ -1,4 +1,4 @@
-import Room, { Rooms } from "../../../sql/objects/room"
+import Room from "../../../sql/objects/room"
 import { createCanvas, loadImage } from "canvas"
 import connector from "../../../sql/connector"
 import Activity from "../../../sql/objects/activity"
@@ -12,6 +12,7 @@ import dayjs from "dayjs"
 import timezone from "dayjs/plugin/timezone"
 import utc from "dayjs/plugin/utc"
 import { isDev } from "../../../index"
+import { Rooms } from "../../../intra/dto";
 dayjs.extend(timezone)
 dayjs.extend(utc)
 
@@ -70,45 +71,45 @@ export const sendRoomCreatedMessage = async (room: Room) => {
 }
 
 const roomImagesMapping: {[key in Rooms]: string} = {
-  [Rooms.COMTE]: "COMTE.png",
-  [Rooms.MORDOR]: "MORDOR.jpg",
-  [Rooms.TORVALDS]: "TORVALDS.png",
-  [Rooms.GALLIFREY]: "GALLIFREY.png",
-  [Rooms.BOURG_PALETTE]: "BOURG_PALETTE.png",
-  [Rooms.GOTHAM]: "GOTHAM.png",
-  [Rooms.HUB_INNOVATION]: "HUB_INNOVATION.png",
-  [Rooms.POUDLARD]: "POUDLARD.png",
-  [Rooms.TATOOINE]: "TATOOINE.png",
-  [Rooms.VOGONS]: "VOGONS.png",
-  [Rooms.WESTEROS]: "WESTEROS.png",
-  [Rooms.KAMAR_TAJ]: "KAMAR_TAJ.png",
-  [Rooms.ACCUEIL]: "NA.png",
-  [Rooms.BARNEY_STINSON]: "BARNEY_STINSON.png",
-  [Rooms.CAFETERIA]: "CAFETERIA.png",
-  [Rooms.FOYER]: "FOYER.png",
-  [Rooms.HALL]: "HALL.png",
-  [Rooms.MARTY_MCFLY]: "MARTY_MCFLY.png",
-  [Rooms.NETHER]: "NETHER.png",
-  [Rooms.PETIT_BUREAU_PEDAGOGIE]: "NA.png",
-  [Rooms.VISIO_TEAMS]: "NA.png",
-  [Rooms.ROOM_105]: "NA.png",
-  [Rooms.ROOM_106]: "NA.png",
-  [Rooms.ROOM_111]: "NA.png",
-  [Rooms.ROOM_111_A]: "NA.png",
-  [Rooms.ROOM_111_B]: "NA.png",
-  [Rooms.ROOM_112]: "NA.png",
-  [Rooms.ROOM_112_A]: "NA.png",
-  [Rooms.ROOM_112_B]: "NA.png",
-  [Rooms.ROOM_114]: "NA.png",
-  [Rooms.ROOM_115]: "NA.png",
-  [Rooms.AMPHI]: "NA.png",
-  [Rooms.ROOM_20]: "NA.png",
-  [Rooms.ROOM_L1_L8]: "NA.png",
-  [Rooms.EXTERIEUR]: "NA.png",
-  [Rooms.CITE_DES_CONGRES]: "NA.png",
-  [Rooms.LA_CANTINE]: "NA.png",
-  [Rooms.LE_PALACE]: "NA.png",
-  [Rooms.VALEURIAD]: "NA.png"
+  'Comté': "COMTE.png",
+  'Mordor': "MORDOR.jpg",
+  'Torvalds': "TORVALDS.png",
+  'Gallifrey': "GALLIFREY.png",
+  'Bourg Palette': "BOURG_PALETTE.png",
+  'Gotham': "GOTHAM.png",
+  'Hub Innovation': "HUB_INNOVATION.png",
+  'Poudlard': "POUDLARD.png",
+  'Tatooine': "TATOOINE.png",
+  'Vogons': "VOGONS.png",
+  'Westeros': "WESTEROS.png",
+  'Kamar-Taj': "KAMAR_TAJ.png",
+  'Accueil': "NA.png",
+  'Barney Stinson': "BARNEY_STINSON.png",
+  'Cafétéria': "CAFETERIA.png",
+  'Foyer': "FOYER.png",
+  'Hall': "HALL.png",
+  'Marty McFly': "MARTY_MCFLY.png",
+  'Nether': "NETHER.png",
+  'Petit Bureau Pédagogie': "NA.png",
+  'Visio Teams': "NA.png",
+  'Salle 105': "NA.png",
+  'Salle 106': "NA.png",
+  'Salle 111': "NA.png",
+  'Salle 111-A': "NA.png",
+  'Salle 111-B': "NA.png",
+  'Salle 112': "NA.png",
+  'Salle 112-A': "NA.png",
+  'Salle 112-B': "NA.png",
+  'Salle 114': "NA.png",
+  'Salle 115': "NA.png",
+  'Amphithéâtre': "NA.png",
+  'Salle 20': "NA.png",
+  'Salle L1 à L8': "NA.png",
+  'Extérieur': "NA.png",
+  'Cité des Congrès': "NA.png",
+  'La Cantine - Hall 6': "NA.png",
+  'Le Palace - Place Graslin': "NA.png",
+  'Valeuriad - 14 rue François Evellin': "NA.png"
 }
 
 export const createRoomImage = async (room: Room, activity: Activity, module: Module) => {

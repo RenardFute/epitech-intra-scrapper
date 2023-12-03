@@ -95,7 +95,7 @@ export const roomsScrap = async (): Promise<ScrapStatistics> => {
 export const startSchedulers = () => {
   const delayBeforeNextHour = 1000 * 60 * 60 - (Date.now() % (1000 * 60 * 60))
 
-  console.log("Schedulers started", new Date().toLocaleString())
+  console.log("Schedulers started @", new Date().toLocaleString())
   console.log("  -> Next hour in", delayBeforeNextHour / 1000 / 60, "minutes")
 
   setTimeout(() => {

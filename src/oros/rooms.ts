@@ -20,7 +20,8 @@ export const scrapRoomsForDate = async (date: Date): Promise<Room[]> => {
 
   for (const place of rooms) {
     for (const room of Object.keys(place) as Rooms[]) {
-      const activities = place[room].activities
+      if (!place[room] || place[room] === null) continue
+      const activities = place[room]!.activities
       let index = 0
       let oldActivity: Activity | null = null
       for (const activity of activities) {

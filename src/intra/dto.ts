@@ -294,7 +294,7 @@ export const RoomsCodec = t.union([
 export const RoomCodex = t.type({
   name: t.string,
   hide_if_free: t.boolean,
-  rooms: t.record(RoomsCodec, t.type({
+  rooms: t.record(RoomsCodec, t.union([t.type({
       activities: t.array(t.type({
         activity_title: t.string,
         start_at: t.number,
@@ -305,7 +305,7 @@ export const RoomCodex = t.type({
       force_closed: t.union([t.boolean, t.undefined]),
       force_closed_message:  t.union([t.string, t.undefined]),
       french_gender: t.union([t.union([t.literal('masculine'), t.literal('feminine')]), t.undefined])
-    })
+    }), t.undefined])
   )
 })
 
