@@ -3,6 +3,13 @@ import { updateChannel } from "../../discord"
 import Activity from "./activity"
 import Module from "./module"
 
+/**
+ * Enum representing the different promos
+ * @enum {string}
+ * @since 1.0.0
+ * @category User
+ * @author Axel ECKENBERG
+ */
 export enum Promo {
   TEK_1 = "TEK 1",
   TEK_2 = "TEK 2",
@@ -15,14 +22,102 @@ export enum Promo {
   MSC_2 = "MSC 2"
 }
 
+/**
+ * Class representing a source user
+ * @extends SqlType
+ * @category User
+ * @since 1.0.0
+ * @author Axel ECKENBERG
+ * @see SqlType
+ */
 export default class SourceUser extends SqlType {
+  /**
+   * The name of the user
+   * @type {string}
+   * @since 1.0.0
+   * @category User
+   * @see SourceUser
+   * @fieldOf SourceUser
+   * @instance
+   * @default ""
+   * @author Axel ECKENBERG
+   */
   name: string
+  /**
+   * The connection cookie of the user
+   * @type {string}
+   * @since 1.0.0
+   * @category User
+   * @see SourceUser
+   * @fieldOf SourceUser
+   * @instance
+   * @default ""
+   * @author Axel ECKENBERG
+   */
   cookie: string
+  /**
+   * The year the user arrived at Epitech in TEK 1
+   * @type {number}
+   * @since 1.0.0
+   * @category User
+   * @see SourceUser
+   * @see Promo.TEK_1
+   * @fieldOf SourceUser
+   * @instance
+   * @default 0
+   * @author Axel ECKENBERG
+   */
   year: number
+  /**
+   * The promo of the user
+   * @type {Promo}
+   * @since 1.0.0
+   * @category User
+   * @see SourceUser
+   * @fieldOf SourceUser
+   * @instance
+   * @default Promo.TEK_1
+   * @see Promo
+   * @see Promo.TEK_1
+   * @author Axel ECKENBERG
+   */
   promo: Promo
+  /**
+   * The discord user id of the user
+   * @type {string}
+   * @since 1.0.0
+   * @category User
+   * @primaryKey
+   * @see SourceUser
+   * @fieldOf SourceUser
+   * @instance
+   * @default ""
+   * @author Axel ECKENBERG
+   */
   discordUserId: string
+  /**
+   * Whether the user is disabled or not (e.g. not logged in anymore)
+   * @type {SqlBoolean}
+   * @since 1.0.0
+   * @category User
+   * @see SourceUser
+   * @fieldOf SourceUser
+   * @instance
+   * @default false
+   * @see SqlBoolean
+   * @author Axel ECKENBERG
+   */
   disabled: SqlBoolean
-  static databaseName = "source_users"
+  /**
+   * The name of the database table
+   * @type {string}
+   * @since 1.0.0
+   * @category User
+   * @see SourceUser
+   * @fieldOf SourceUser
+   * @see SqlType.databaseName
+   */
+  static databaseName: string = "source_users"
 
   static getEmptyObject() {
     return new SourceUser()

@@ -55,8 +55,7 @@ module.exports = {
     '@typescript-eslint/no-namespace': 'off',
     '@typescript-eslint/triple-slash-reference': 'off',
     indent: ['error', 2, { SwitchCase: 1 }],
-    semi: ['error', 'never'],
-    "tsdoc/syntax": "warn"
+    semi: ['error', 'never']
   },
   settings: {
     'import/parsers': {

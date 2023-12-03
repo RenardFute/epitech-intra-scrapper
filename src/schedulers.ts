@@ -13,8 +13,23 @@ import { sendRoomUpdateMessage } from "./discord/messages/oros/update"
 
 const hourFrequency = 1000 * 60 * 60 // Each hour
 
+/**
+ * Custom type to summarize scrap statistics
+ * @author Axel ECKENBERG
+ * @since 1.0.0
+ */
 type ScrapStatistics = { fetched: number, inserted: number, updated: number, deleted: number, time: number }
 
+/**
+ * Scrap all modules for all synced promos
+ * @returns Scrap statistics
+ * @see ScrapStatistics
+ * @see getSyncedPromos
+ * @see scrapModulesForPromo
+ *
+ * @author Axel ECKENBERG
+ * @since 1.0.0
+ */
 export const modulesScrap = async (): Promise<ScrapStatistics> => {
   const syncedPromos = await getSyncedPromos()
   const totalStats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
@@ -46,6 +61,16 @@ export const modulesScrap = async (): Promise<ScrapStatistics> => {
   return totalStats
 }
 
+/**
+ * Scrap all activities for all ongoing modules
+ * @returns Scrap statistics
+ * @see ScrapStatistics
+ * @see getSyncedPromos
+ * @see scrapActivitiesForModule
+ *
+ * @author Axel ECKENBERG
+ * @since 1.0.0
+ */
 export const activitiesScrap = async (): Promise<ScrapStatistics> => {
   const modulesSynced = await connector.getMany(Module, {isOngoing: 1})
   const stats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
@@ -70,6 +95,15 @@ export const activitiesScrap = async (): Promise<ScrapStatistics> => {
   return stats
 }
 
+/**
+ * Scrap all rooms for the current day
+ * @returns Scrap statistics
+ * @see ScrapStatistics
+ * @see scrapRoomsForDate
+ *
+ * @since 1.0.0
+ * @author Axel ECKENBERG
+ */
 export const roomsScrap = async (): Promise<ScrapStatistics> => {
   const stats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
   let rooms = await scrapRoomsForDate(new Date())
@@ -92,6 +126,17 @@ export const roomsScrap = async (): Promise<ScrapStatistics> => {
   return stats
 }
 
+/**
+ * Start all schedulers
+ * Delay the start of the schedulers to the next hour
+ * @see modulesScrap
+ * @see activitiesScrap
+ * @see roomsScrap
+ * @see hourFrequency
+ *
+ * @since 1.0.0
+ * @author Axel ECKENBERG
+ */
 export const startSchedulers = () => {
   const delayBeforeNextHour = 1000 * 60 * 60 - (Date.now() % (1000 * 60 * 60))
 
