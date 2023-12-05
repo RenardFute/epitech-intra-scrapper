@@ -281,7 +281,7 @@ export const RoomsCodec = t.union([
   t.literal("Valeuriad - 14 rue François Evellin")
 ])
 
-export const RoomCodex = t.type({
+export const RoomCodec = t.type({
   name: t.string,
   hide_if_free: t.boolean,
   rooms: t.record(RoomsCodec, t.union([t.type({
@@ -299,6 +299,76 @@ export const RoomCodex = t.type({
   )
 })
 
+// @ts-ignore
+export const projectStatusCodec = t.union([
+  t.literal("project_confirmed")
+])
+
+export const groupUserCodec = t.intersection([userCodec, t.type({
+  status: t.union([t.literal("confirmed"), t.literal("requesting")]),
+  date_ins: t.string,
+  date_modif: t.union([t.null, t.string]),
+})])
+
+export const projectGroupCodec = t.type({
+  id: t.string,
+  title: t.union([t.string, t.null]),
+  code: t.string,
+  final_note: t.null,
+  repository: t.union([t.string, t.null]),
+  closed: t.boolean,
+  master: groupUserCodec,
+  members: t.array(groupUserCodec),
+})
+
+export const detailedProjectCodec = t.type({
+  scolaryear: t.string,
+  codemodule: t.string,
+  codeinstance: t.string,
+  codeacti: t.string,
+  instance_location: t.string,
+  module_title: t.string,
+  id_activite: t.string,
+  project_title: t.string,
+  type_title: ActivityTypeCodec,
+  type_code: ActivityMainTypeCodec,
+  register: booleanCodec,
+  register_by_bloc: booleanCodec,
+  register_prof: booleanCodec,
+  nb_min: t.number,
+  nb_max: t.number,
+  begin: t.string,
+  end: t.string,
+  end_register: t.union([t.string, t.null]),
+  deadline: t.union([t.string, t.null]),
+  is_rdv: booleanCodec,
+  instance_allowed: t.union([t.string, t.null]),
+  title: t.string,
+  description: t.string,
+  closed: booleanCodec,
+  over: t.number,
+  over_deadline: t.union([t.number, t.null]),
+  date_access: booleanCodec,
+  instance_registered: booleanCodec,
+  user_project_status: t.union([projectStatusCodec, t.null]),
+  root_slug: t.union([t.string, t.null]),
+  forum_path: t.union([t.string, t.null]),
+  slug: t.union([t.string, t.null]),
+  call_ihk: t.union([booleanCodec, t.null]),
+  nb_notes: t.union([t.null, t.number]),
+  user_project_master: t.union([booleanCodec, t.null]),
+  user_project_code: t.union([t.string, t.null]),
+  user_project_title: t.union([t.string, t.null]),
+  registered_instance: t.number,
+  registered: t.array(projectGroupCodec),
+  notregistered: t.array(userCodec),
+  urls: t.array(t.type({
+    notation: booleanCodec,
+    title: t.string,
+    link: t.string,
+  }))
+})
+
 export type detailedModuleDTO = t.TypeOf<typeof detailedModuleCodec>
 export type userDTO = t.TypeOf<typeof userCodec>
 export type activityDTO = t.TypeOf<typeof activityCodec>
@@ -307,5 +377,7 @@ export type projectDTO = t.TypeOf<typeof projectCodec>
 export type moduleDTO = t.TypeOf<typeof moduleCodec>
 export type ActivityType = t.TypeOf<typeof ActivityTypeCodec>
 export type ActivityMainType = t.TypeOf<typeof ActivityMainTypeCodec>
-export type RoomDTO = t.TypeOf<typeof RoomCodex>
+export type RoomDTO = t.TypeOf<typeof RoomCodec>
 export type Rooms = t.TypeOf<typeof RoomsCodec>
+export type projectGroupDTO = t.TypeOf<typeof projectGroupCodec>
+export type detailedProjectDTO = t.TypeOf<typeof detailedProjectCodec>

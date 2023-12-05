@@ -1,6 +1,6 @@
 import { EmbedBuilder, SlashCommandBuilder } from "discord.js"
 import { Command } from "../../index"
-import { activitiesScrap, modulesScrap, roomsScrap } from "../../../schedulers"
+import { activitiesScrap, modulesScrap, projectScrap, roomsScrap } from "../../../schedulers"
 import { getSyncedPromos } from "../../../sql/objects/sourceUser"
 
 
@@ -17,6 +17,7 @@ export default {
       const moduleStats = await modulesScrap()
       const activitiesStats = await activitiesScrap()
       const roomsStats = await roomsScrap()
+      const projectStats = await projectScrap()
 
       const embed = new EmbedBuilder()
         .setTitle("Update Results")
@@ -37,9 +38,14 @@ export default {
             name: "Rooms",
             value: "``" + roomsStats.fetched + "`` fetched, ``" + roomsStats.inserted + "`` inserted, ``" + roomsStats.updated + "`` updated",
             inline: true,
+          },
+          {
+            name: "Projects",
+            value: "``" + projectStats.fetched + "`` fetched, ``" + projectStats.inserted + "`` inserted, ``" + projectStats.updated + "`` updated",
+            inline: true,
           }]
         )
-        .setFooter({text: "Done in " + (moduleStats.time + activitiesStats.time + roomsStats.time) + "ms"})
+        .setFooter({text: "Done in " + (moduleStats.time + activitiesStats.time + roomsStats.time + projectStats.time) + "ms"})
       await interaction.editReply({embeds: [embed]})
       return
     }
@@ -87,6 +93,21 @@ export default {
           .setFields([
             {
               name: "Rooms",
+              value: "``" + stats.fetched + "`` fetched, ``" + stats.inserted + "`` inserted, ``" + stats.updated + "`` updated",
+              inline: true,
+            }]
+          )
+          .setFooter({text: "Done in " + stats.time + "ms"})
+        break
+      case 'projects':
+        stats = await projectScrap()
+        embed = new EmbedBuilder()
+          .setTitle("Update Results")
+          .setColor("#3296d1")
+          .setDescription("*Here are the results of the update*")
+          .setFields([
+            {
+              name: "Projects",
               value: "``" + stats.fetched + "`` fetched, ``" + stats.inserted + "`` inserted, ``" + stats.updated + "`` updated",
               inline: true,
             }]

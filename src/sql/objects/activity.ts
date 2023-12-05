@@ -13,7 +13,7 @@ export default class Activity extends SqlType {
   end: Date
   location: string
   description: string
-  isProject: boolean
+  isProject: SqlBoolean
   isGraded: SqlBoolean
   hasMeeting: SqlBoolean
   url: string

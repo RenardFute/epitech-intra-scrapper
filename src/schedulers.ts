@@ -10,6 +10,8 @@ import { sendModuleUpdateMessage } from "./discord/messages/modules/update"
 import { sendModuleCreatedMessage } from "./discord/messages/modules/new"
 import { sendRoomCreatedMessage } from "./discord/messages/oros/new"
 import { sendRoomUpdateMessage } from "./discord/messages/oros/update"
+import { scrapProjectForActivity } from "./intra/projects"
+import Project from "./sql/objects/project"
 
 const hourFrequency = 1000 * 60 * 60 // Each hour
 
@@ -96,6 +98,43 @@ export const activitiesScrap = async (): Promise<ScrapStatistics> => {
 }
 
 /**
+ * Scrap project for all activities with a project
+ * @returns Scrap statistics
+ * @see ScrapStatistics
+ * @see getSyncedPromos
+ * @see scrapProjectForActivity
+ *
+ * @author Axel ECKENBERG
+ * @since 1.0.0
+ */
+export const projectScrap = async (): Promise<ScrapStatistics> => {
+  const modulesSynced = await connector.getMany(Module, {isOngoing: 1})
+  const activitiesSynced = (await connector.getMany(Activity, {isProject: true})).filter((a) => modulesSynced.find((m) => m.id === a.moduleId))
+  const stats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
+  for (const activity of activitiesSynced) {
+    const project = await scrapProjectForActivity(activity)
+    if (!project) {
+      console.error("No project found for activity", activity)
+      continue
+    }
+    stats.fetched += 1
+    const result = await connector.insertOrUpdate(Project, project, {activityId: project.activityId})
+    if (result) {
+      if (result.isDiff) {
+        // TODO: Notify project update
+        stats.updated++
+      }
+    } else {
+      // TODO: Notify new project
+      stats.inserted++
+    }
+  }
+  stats.time = Date.now() - stats.time
+  console.log("Projects scrap done", new Date().toLocaleString(), stats)
+  return stats
+}
+
+/**
  * Scrap all rooms for the current day
  * @returns Scrap statistics
  * @see ScrapStatistics
@@ -149,7 +188,9 @@ export const startSchedulers = () => {
   }, delayBeforeNextHour)
 
   setTimeout(() => {
-    activitiesScrap().then()
+    activitiesScrap().then(
+      () => projectScrap().then()
+    )
     setInterval(activitiesScrap, hourFrequency)
   }, delayBeforeNextHour)
 
