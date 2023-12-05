@@ -9,15 +9,17 @@ export default {
     .setName('update')
     .setDescription('Fetch updates from the intranet')
     .addStringOption(option => option.setName('type').setDescription('Type of objects to fetch').setRequired(false))
+    .addBooleanOption(option => option.setName('all').setDescription('Fetch all data (even inactive)').setRequired(false))
     .setDefaultMemberPermissions(0x0000000000000080),
   async execute(_client, interaction) {
     const type = interaction.options.getString('type')
+    const all = interaction.options.getBoolean('all') || false
     interaction.deferReply()
     if (!type) {
       const moduleStats = await modulesScrap()
-      const activitiesStats = await activitiesScrap()
+      const activitiesStats = await activitiesScrap(all)
       const roomsStats = await roomsScrap()
-      const projectStats = await projectScrap()
+      const projectStats = await projectScrap(all)
 
       const embed = new EmbedBuilder()
         .setTitle("Update Results")
@@ -70,7 +72,7 @@ export default {
           .setFooter({text: "Done in " + stats.time + "ms"})
         break
       case 'activities':
-        stats = await activitiesScrap()
+        stats = await activitiesScrap(all)
         embed = new EmbedBuilder()
           .setTitle("Update Results")
           .setColor("#3296d1")
@@ -100,7 +102,7 @@ export default {
           .setFooter({text: "Done in " + stats.time + "ms"})
         break
       case 'projects':
-        stats = await projectScrap()
+        stats = await projectScrap(all)
         embed = new EmbedBuilder()
           .setTitle("Update Results")
           .setColor("#3296d1")

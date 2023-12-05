@@ -22,6 +22,11 @@ const parseModule = async (dto: moduleDTO, source: SourceUser): Promise<Module |
   const url = "https://intra.epitech.eu/module/" + year + "/" + code + "/"+ dto.codeinstance + "/"
   const id = dto.id
 
+  let promo = source.promo
+  if (semester === 0) {
+    promo = Promo.TEKS
+  }
+
   const result = new Module().fromJson({
     city,
     credits,
@@ -32,7 +37,7 @@ const parseModule = async (dto: moduleDTO, source: SourceUser): Promise<Module |
     isRegistrationOpen: registrationStatus,
     isRoadblock: flags.indexOf(ModuleFlags.ROADBLOCK) > -1,
     isMandatory: flags.indexOf(ModuleFlags.REQUIRED) > -1,
-    promo: source.promo,
+    promo,
     start,
     year,
     code,
@@ -41,13 +46,6 @@ const parseModule = async (dto: moduleDTO, source: SourceUser): Promise<Module |
     semester,
     url
   })
-  await connector.delete(ModuleFlag, { moduleId: result.id })
-  const flagsToInsert = createFlags(flags, result)
-  for (const flag of flagsToInsert) {
-    if (flagsToInsert.length > 1 && flag.flag === ModuleFlags.NONE)
-      continue
-    await connector.insert(ModuleFlag, flag)
-  }
   return result
 }
 
@@ -75,18 +73,18 @@ export const findFlags = (flags: number): ModuleFlags[] => {
   return result
 }
 
-export const scrapModulesForPromo = async (promo: Promo): Promise<Module[]> => {
+export const scrapModulesForPromo = async (promo: Promo): Promise<{ module: Module, flags: number }[]> => {
   const user = await connector.getOne(SourceUser, { promo: promo, disabled: 0 })
   if (!user) {
     // TODO: Send error message with discord bot
     throw new Error("No user found")
   }
   const dto = await fetchModulesForUser(user)
-  const modules: Module[] = []
+  const modules: { module: Module, flags: number }[] = []
   for (const m of dto) {
     const module = await parseModule(m, user)
     if (module)
-      modules.push(module)
+      modules.push({module, flags: parseInt(m.flags)})
   }
   return modules
 }

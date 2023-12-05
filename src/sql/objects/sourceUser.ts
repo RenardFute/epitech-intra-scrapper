@@ -19,7 +19,8 @@ export enum Promo {
   PRE_MSC_1 = "PRE-MSC 1",
   PRE_MSC_2 = "PRE-MSC 2",
   MSC_1 = "MSC 1",
-  MSC_2 = "MSC 2"
+  MSC_2 = "MSC 2",
+  TEKS = "TEKS"
 }
 
 /**

@@ -6,6 +6,7 @@ import { fetchProjectForUser } from "./scrappers"
 import { detailedProjectDTO } from "./dto"
 import dayjs from "dayjs"
 import Project from "../sql/objects/project"
+import { isDev } from "../index"
 
 const parseProject = async (dto: detailedProjectDTO, activity: Activity, _module: Module): Promise<Project> => {
   const name = dto.title
@@ -32,12 +33,14 @@ const parseProject = async (dto: detailedProjectDTO, activity: Activity, _module
 export const scrapProjectForActivity = async (activity: Activity): Promise<Project | null> => {
   const module = await connector.getOne(Module, { id: activity.moduleId })
   if (!module) {
-    console.error("No module found for activity", activity)
+    if (isDev)
+      console.error("No module found for activity", activity)
     return null
   }
   const user = await connector.getOne(SourceUser, { promo: module.promo, disabled: 0 })
   if (!user) {
-    console.error("No user found for module", module)
+    if (isDev)
+      console.error("No user found for module", module)
     return null
   }
   const dto = await fetchProjectForUser(user, activity)

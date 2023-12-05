@@ -1,5 +1,5 @@
 import { getSyncedPromos } from "./sql/objects/sourceUser"
-import { scrapModulesForPromo } from "./intra/modules"
+import { createFlags, findFlags, scrapModulesForPromo } from "./intra/modules"
 import connector from "./sql/connector"
 import Module from "./sql/objects/module"
 import { scrapActivitiesForModule } from "./intra/activities"
@@ -12,6 +12,9 @@ import { sendRoomCreatedMessage } from "./discord/messages/oros/new"
 import { sendRoomUpdateMessage } from "./discord/messages/oros/update"
 import { scrapProjectForActivity } from "./intra/projects"
 import Project from "./sql/objects/project"
+import ModuleFlag from "./sql/objects/moduleFlag"
+import { ModuleFlags } from "./intra/dto"
+import { isDev } from "./index"
 
 const hourFrequency = 1000 * 60 * 60 // Each hour
 
@@ -40,8 +43,8 @@ export const modulesScrap = async (): Promise<ScrapStatistics> => {
     const stats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
     const modules = await scrapModulesForPromo(promo)
     stats.fetched = modules.length
-    for (const m of modules) {
-      const result = await connector.insertOrUpdate(Module, m, {id: m.id})
+    for (const r of modules) {
+      const result = await connector.insertOrUpdate(Module, r.module, {id: r.module.id})
       if (result) {
         if (result.isDiff) {
           stats.updated++
@@ -49,7 +52,14 @@ export const modulesScrap = async (): Promise<ScrapStatistics> => {
         }
       } else {
         stats.inserted++
-        await sendModuleCreatedMessage(m)
+        await sendModuleCreatedMessage(r.module)
+      }
+      await connector.delete(ModuleFlag, { moduleId: r.module.id })
+      const flagsToInsert = createFlags(findFlags(r.flags), r.module)
+      for (const flag of flagsToInsert) {
+        if (flagsToInsert.length > 1 && flag.flag === ModuleFlags.NONE)
+          continue
+        await connector.insert(ModuleFlag, flag)
       }
     }
     stats.time = Date.now() - stats.time
@@ -73,8 +83,8 @@ export const modulesScrap = async (): Promise<ScrapStatistics> => {
  * @author Axel ECKENBERG
  * @since 1.0.0
  */
-export const activitiesScrap = async (): Promise<ScrapStatistics> => {
-  const modulesSynced = await connector.getMany(Module, {isOngoing: 1})
+export const activitiesScrap = async (all?: boolean): Promise<ScrapStatistics> => {
+  const modulesSynced = await connector.getMany(Module, all ? undefined : {isOngoing: 1})
   const stats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
   for (const module of modulesSynced) {
     const activities = await scrapActivitiesForModule(module)
@@ -107,14 +117,15 @@ export const activitiesScrap = async (): Promise<ScrapStatistics> => {
  * @author Axel ECKENBERG
  * @since 1.0.0
  */
-export const projectScrap = async (): Promise<ScrapStatistics> => {
-  const modulesSynced = await connector.getMany(Module, {isOngoing: 1})
+export const projectScrap = async (all?: boolean): Promise<ScrapStatistics> => {
+  const modulesSynced = await connector.getMany(Module, all ? undefined : {isOngoing: 1})
   const activitiesSynced = (await connector.getMany(Activity, {isProject: true})).filter((a) => modulesSynced.find((m) => m.id === a.moduleId))
   const stats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
   for (const activity of activitiesSynced) {
     const project = await scrapProjectForActivity(activity)
     if (!project) {
-      console.error("No project found for activity", activity)
+      if (isDev)
+        console.error("No project found for activity", activity)
       continue
     }
     stats.fetched += 1
@@ -176,7 +187,7 @@ export const roomsScrap = async (): Promise<ScrapStatistics> => {
  * @since 1.0.0
  * @author Axel ECKENBERG
  */
-export const startSchedulers = () => {
+export const startSchedulers = async () => {
   const delayBeforeNextHour = 1000 * 60 * 60 - (Date.now() % (1000 * 60 * 60))
 
   console.log("Schedulers started @", new Date().toLocaleString())
@@ -199,7 +210,7 @@ export const startSchedulers = () => {
     setInterval(roomsScrap, hourFrequency)
   }, delayBeforeNextHour)
 
-  setInterval(() => {
+  setInterval(async () => {
     try {
       connector.query("SELECT 1").then()
     } catch (e) {
@@ -207,4 +218,12 @@ export const startSchedulers = () => {
       console.error(e)
     }
   }, 1000 * 60)
+
+
+  const timeout: {Value: any}[] = await connector.query("SHOW VARIABLES LIKE 'interactive_timeout'")
+  console.log("DB connection refreshed, will timeout after", timeout[0].Value, "seconds")
+  setTimeout(async () => {
+    connector.close()
+    await connector.connect()
+  }, parseInt(timeout[0].Value) * 1000 - 1000 * 60)
 }

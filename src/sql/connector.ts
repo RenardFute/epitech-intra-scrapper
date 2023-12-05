@@ -400,6 +400,7 @@ export class SqlConnect {
    * Close the connection to the database
    */
   public close() {
+    this.connection.destroy()
     if (this.isConnected())
       this.connection.end()
   }
