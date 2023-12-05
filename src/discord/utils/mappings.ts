@@ -9,5 +9,6 @@ export const promoMapping: { [key in Promo]: string } = {
   "PRE-MSC 1": "",
   "PRE-MSC 2": "",
   "MSC 1": "",
-  "MSC 2": ""
+  "MSC 2": "",
+  "TEKS": "???"
 }
