@@ -21,12 +21,12 @@ export enum ModuleFlags {
   OPTIONAL = "Optional",
   HIDDEN_1 = "Hidden 1",
   HIDDEN_2 = "Hidden 2",
-  HIDDEN_3 = "Hidden 3",
+  ACQUIRED_OR_NOT = "Acquired or not",
 }
 
 export const ModuleFlagsMasks: { [key in ModuleFlags]: number } = {
   [ModuleFlags.REQUIRED]:               0b10000000,
-  [ModuleFlags.HIDDEN_3]:               0b01000000,
+  [ModuleFlags.ACQUIRED_OR_NOT]:        0b01000000,
   [ModuleFlags.MULTIPLE_REGISTRATION]:  0b00100000,
   [ModuleFlags.HIDDEN_2]:               0b00010000,
   [ModuleFlags.ROADBLOCK]:              0b00001000,

@@ -184,9 +184,9 @@ export class SqlConnect {
           return p1.toUpperCase()
         })
         if (trueKey.startsWith('is') || trueKey.startsWith('has')) {
-          object[<keyof K>trueKey] = (row[key] === 1) as K[keyof K]
+          object[<keyof K>trueKey] = (row[key] === 1) as SqlBoolean as K[keyof K]
         } else if (trueKey.startsWith('json')) {
-          object[<keyof K>trueKey] = JSON.parse(row[key]) as K[keyof K]
+          object[<keyof K>trueKey] = JSON.parse(row[key]) as SqlJson as K[keyof K]
         } else {
           object[<keyof K>trueKey] = row[key]
         }
@@ -339,6 +339,8 @@ export class SqlConnect {
         duplicate[<keyof K>key] = (object[<keyof K>key] ? 1 : 0) as K[keyof K]
       } else if (key.toLowerCase().startsWith('json')) {
         duplicate[<keyof K>key] = JSON.stringify(object[<keyof K>key]) as K[keyof K]
+      } else if (duplicate[<keyof K>key] === undefined) {
+        delete duplicate[<keyof K>key]
       }
     }
     return duplicate

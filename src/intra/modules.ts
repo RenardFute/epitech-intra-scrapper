@@ -4,6 +4,7 @@ import connector from "../sql/connector"
 import dayjs from "dayjs"
 import { moduleDTO, ModuleFlags, ModuleFlagsMasks } from "./dto"
 import { fetchModulesForUser } from "./scrappers"
+import ModuleFlag from "../sql/objects/moduleFlag"
 
 const parseModule = async (dto: moduleDTO, source: SourceUser): Promise<Module | null> => {
   const nameFull = dto.title
@@ -21,7 +22,7 @@ const parseModule = async (dto: moduleDTO, source: SourceUser): Promise<Module |
   const url = "https://intra.epitech.eu/module/" + year + "/" + code + "/"+ dto.codeinstance + "/"
   const id = dto.id
 
-  return new Module().fromJson({
+  const result = new Module().fromJson({
     city,
     credits,
     end,
@@ -40,6 +41,26 @@ const parseModule = async (dto: moduleDTO, source: SourceUser): Promise<Module |
     semester,
     url
   })
+  await connector.delete(ModuleFlag, { moduleId: result.id })
+  const flagsToInsert = createFlags(flags, result)
+  for (const flag of flagsToInsert) {
+    if (flagsToInsert.length > 1 && flag.flag === ModuleFlags.NONE)
+      continue
+    await connector.insert(ModuleFlag, flag)
+  }
+  return result
+}
+
+export const createFlags = (flags: ModuleFlags[], module: Module): ModuleFlag[] => {
+  const result: ModuleFlag[] = []
+  for (const flag of flags) {
+    const moduleFlag = new ModuleFlag().fromJson({
+      moduleId: module.id,
+      flag: flag
+    })
+    result.push(moduleFlag)
+  }
+  return result
 }
 
 export const findFlags = (flags: number): ModuleFlags[] => {
