@@ -190,7 +190,6 @@ export const isUserStillLoggedIn = async (user: SourceUser): Promise<boolean> =>
   const isLoggedOut = 'message' in json && json.message === 'Veuillez vous connecter'
   if (isLoggedOut) {
     user.disabled = true
-    console.log(json)
     await connector.update(SourceUser, user, { discordUserId: user.discordUserId })
   } else {
     user.disabled = false

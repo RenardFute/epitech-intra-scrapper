@@ -2,7 +2,7 @@ import SourceUser, { Promo } from "../sql/objects/sourceUser"
 import Module from "../sql/objects/module"
 import connector from "../sql/connector"
 import dayjs from "dayjs"
-import { flagCombination, knownFlagsIds, moduleDTO, ModuleFlags } from "./dto"
+import { moduleDTO, ModuleFlags, ModuleFlagsMasks } from "./dto"
 import { fetchModulesForUser } from "./scrappers"
 
 const parseModule = async (dto: moduleDTO, source: SourceUser): Promise<Module | null> => {
@@ -15,11 +15,7 @@ const parseModule = async (dto: moduleDTO, source: SourceUser): Promise<Module |
   const end = dayjs(dto.end, "YYYY-MM-DD").toDate()
   const city = dto.location_title
   const credits = parseInt(dto.credits)
-  if (knownFlagsIds.indexOf(dto.flags) === -1) {
-    console.log("Unknown flag id: " + dto.flags, dto)
-    return null
-  }
-  const flags = flagCombination[dto.flags]
+  const flags = findFlags(parseInt(dto.flags))
   const registrationStatus = dto.open === "1"
   const year = dto.scolaryear
   const url = "https://intra.epitech.eu/module/" + year + "/" + code + "/"+ dto.codeinstance + "/"
@@ -44,6 +40,18 @@ const parseModule = async (dto: moduleDTO, source: SourceUser): Promise<Module |
     semester,
     url
   })
+}
+
+export const findFlags = (flags: number): ModuleFlags[] => {
+  const result: ModuleFlags[] = []
+  for (const flag in ModuleFlags) {
+    const flagValue: ModuleFlags = ModuleFlags[flag as keyof typeof ModuleFlags]
+    const flagMask = ModuleFlagsMasks[flagValue]
+    if ((flags & flagMask) === flagMask) {
+      result.push(flagValue)
+    }
+  }
+  return result
 }
 
 export const scrapModulesForPromo = async (promo: Promo): Promise<Module[]> => {

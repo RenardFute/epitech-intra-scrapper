@@ -174,14 +174,14 @@ client.on(Events.InteractionCreate, async interaction => {
     const year = interaction.fields.getField("yearInput").value as string
     const userId = interaction.user.id
 
-    const sourceUser = {
+    const sourceUser = new SourceUser().fromJson({
       name,
       cookie,
       year: parseInt(year),
       promo,
       discordUserId: userId,
       disabled: false
-    } as SourceUser
+    })
 
     // Check if year is coherent
     const currentYear = new Date().getFullYear()

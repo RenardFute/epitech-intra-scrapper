@@ -1,12 +1,5 @@
 import * as t from 'io-ts'
 
-export enum ModuleFlags {
-  REQUIRED = "Required Registration",
-  MULTIPLE_REGISTRATION = "Multiple Registration",
-  NONE = "None",
-  PROGRESSIVE = "Progressive",
-  ROADBLOCK = "Roadblock"
-}
 
 export const Grades = t.union([
   t.literal("Acquis"),
@@ -19,32 +12,28 @@ export const Grades = t.union([
   t.literal("N/A"),
 ])
 
-export const knownFlagsIds: string[] = [
-  "192",
-  "96",
-  "66",
-  "160",
-  "98",
-  "136",
-  "0",
-  "32",
-  "2",
-  "200",
-  "34"
-]
+export enum ModuleFlags {
+  REQUIRED = "Required Registration",
+  MULTIPLE_REGISTRATION = "Multiple Registration",
+  NONE = "None",
+  PROGRESSIVE = "Progressive",
+  ROADBLOCK = "Roadblock",
+  OPTIONAL = "Optional",
+  HIDDEN_1 = "Hidden 1",
+  HIDDEN_2 = "Hidden 2",
+  HIDDEN_3 = "Hidden 3",
+}
 
-export const flagCombination: { [key: string]: ModuleFlags[] } = {
-  "192": [ModuleFlags.REQUIRED],
-  "96": [ModuleFlags.MULTIPLE_REGISTRATION],
-  "66": [ModuleFlags.PROGRESSIVE],
-  "2": [ModuleFlags.PROGRESSIVE],
-  "160": [ModuleFlags.REQUIRED, ModuleFlags.MULTIPLE_REGISTRATION],
-  "98": [ModuleFlags.MULTIPLE_REGISTRATION, ModuleFlags.PROGRESSIVE],
-  "34": [ModuleFlags.MULTIPLE_REGISTRATION, ModuleFlags.PROGRESSIVE],
-  "136": [ModuleFlags.REQUIRED, ModuleFlags.ROADBLOCK],
-  "200": [ModuleFlags.REQUIRED, ModuleFlags.ROADBLOCK],
-  "0": [ModuleFlags.NONE],
-  "32": [ModuleFlags.MULTIPLE_REGISTRATION]
+export const ModuleFlagsMasks: { [key in ModuleFlags]: number } = {
+  [ModuleFlags.REQUIRED]:               0b10000000,
+  [ModuleFlags.HIDDEN_3]:               0b01000000,
+  [ModuleFlags.MULTIPLE_REGISTRATION]:  0b00100000,
+  [ModuleFlags.HIDDEN_2]:               0b00010000,
+  [ModuleFlags.ROADBLOCK]:              0b00001000,
+  [ModuleFlags.HIDDEN_1]:               0b00000100,
+  [ModuleFlags.PROGRESSIVE]:            0b00000010,
+  [ModuleFlags.OPTIONAL]:               0b00000001,
+  [ModuleFlags.NONE]:                   0b00000000,
 }
 
 export const booleanCodec = t.union([t.literal("0"), t.literal("1"), t.literal(1), t.literal(0), t.boolean])
@@ -61,7 +50,8 @@ export const moduleCodec = t.type({
   codeinstance: t.string,
   location_title: t.string,
   instance_location: t.string,
-  flags: t.string,
+  // Flags is a bitfield as a string, but it should not be longer than 8 bits
+  flags: t.brand(t.string, (s): s is t.Branded<string, { readonly Flags: unique symbol }> => s.length <= 8, "Flags"),
   credits: t.string,
   rights: t.array(t.unknown),
   status: t.union([t.literal("valid"), t.literal("ongoing"), t.literal("notregistered")]),
