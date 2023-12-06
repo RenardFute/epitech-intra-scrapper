@@ -239,66 +239,6 @@ export const detailedModuleCodec = t.type({
   activites: t.array(activityCodec),
 })
 
-export const RoomsCodec = t.union([
-  t.literal("Comté"),
-  t.literal("Mordor"),
-  t.literal("Torvalds"),
-  t.literal("Gallifrey"),
-  t.literal("Bourg Palette"),
-  t.literal("Gotham"),
-  t.literal("Hub Innovation"),
-  t.literal("Poudlard"),
-  t.literal("Tatooine"),
-  t.literal("Vogons"),
-  t.literal("Westeros"),
-  t.literal("Kamar-Taj"),
-  t.literal("Accueil"),
-  t.literal("Barney Stinson"),
-  t.literal("Cafétéria"),
-  t.literal("Foyer"),
-  t.literal("Hall"),
-  t.literal("Marty McFly"),
-  t.literal("Nether"),
-  t.literal("Petit Bureau Pédagogie"),
-  t.literal("Visio Teams"),
-  t.literal("Salle 105"),
-  t.literal("Salle 106"),
-  t.literal("Salle 111"),
-  t.literal("Salle 111-A"),
-  t.literal("Salle 111-B"),
-  t.literal("Salle 112"),
-  t.literal("Salle 112-A"),
-  t.literal("Salle 112-B"),
-  t.literal("Salle 114"),
-  t.literal("Salle 115"),
-  t.literal("Amphithéâtre"),
-  t.literal("Salle 20"),
-  t.literal("Salle L1 à L8"),
-  t.literal("Extérieur"),
-  t.literal("Cité des Congrès"),
-  t.literal("La Cantine - Hall 6"),
-  t.literal("Le Palace - Place Graslin"),
-  t.literal("Valeuriad - 14 rue François Evellin")
-])
-
-export const RoomCodec = t.type({
-  name: t.string,
-  hide_if_free: t.boolean,
-  rooms: t.record(RoomsCodec, t.union([t.type({
-    activities: t.array(t.type({
-      activity_title: t.string,
-      start_at: t.number,
-      end_at: t.number,
-      oros_tags: t.array(t.unknown),
-      type: t.union([ActivityMainTypeCodec, t.undefined]),
-    })),
-    force_closed: t.union([t.boolean, t.undefined]),
-    force_closed_message:  t.union([t.string, t.undefined]),
-    french_gender: t.union([t.union([t.literal('masculine'), t.literal('feminine')]), t.undefined])
-  }), t.undefined])
-  )
-})
-
 // @ts-ignore
 export const projectStatusCodec = t.union([
   t.literal("project_confirmed")
@@ -369,6 +309,19 @@ export const detailedProjectCodec = t.type({
   }))
 })
 
+export const LocationTypeCodec = t.type({
+  seats: t.number,
+  type: t.string,
+  title: t.string,
+})
+
+export const LocationCodec = t.type({
+  title: t.string,
+  disabled: t.union([t.boolean, t.undefined]),
+  floor: t.union([t.number, t.undefined]),
+  types: t.union([t.array(LocationTypeCodec), t.undefined]),
+})
+
 export type detailedModuleDTO = t.TypeOf<typeof detailedModuleCodec>
 export type userDTO = t.TypeOf<typeof userCodec>
 export type activityDTO = t.TypeOf<typeof activityCodec>
@@ -377,7 +330,7 @@ export type projectDTO = t.TypeOf<typeof projectCodec>
 export type moduleDTO = t.TypeOf<typeof moduleCodec>
 export type ActivityType = t.TypeOf<typeof ActivityTypeCodec>
 export type ActivityMainType = t.TypeOf<typeof ActivityMainTypeCodec>
-export type RoomDTO = t.TypeOf<typeof RoomCodec>
-export type Rooms = t.TypeOf<typeof RoomsCodec>
 export type projectGroupDTO = t.TypeOf<typeof projectGroupCodec>
 export type detailedProjectDTO = t.TypeOf<typeof detailedProjectCodec>
+export type LocationTypeDTO = t.TypeOf<typeof LocationTypeCodec>
+export type LocationDTO = t.TypeOf<typeof LocationCodec>

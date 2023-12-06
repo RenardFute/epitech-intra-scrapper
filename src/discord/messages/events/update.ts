@@ -5,16 +5,16 @@ import { devChannel, updateChannel } from "../../index"
 import assert from "assert"
 import { promoMapping } from "../../utils/mappings"
 import dayjs from "dayjs"
-import Room from "../../../sql/objects/room"
 import Activity from "../../../sql/objects/activity"
 import timezone from "dayjs/plugin/timezone"
 import utc from "dayjs/plugin/utc"
-import { createRoomImage } from "./new"
+import { createEventImage } from "./new"
 import { isDev } from "../../../index"
+import Event from "../../../sql/objects/event"
 dayjs.extend(timezone)
 dayjs.extend(utc)
 
-const formatUpdate = (field: keyof Room, oldValue: any, newValue: any) => {
+const formatUpdate = (field: keyof Event, oldValue: any, newValue: any) => {
   let emoji = ''
   let name = ''
   switch (field) {
@@ -50,7 +50,7 @@ const formatUpdate = (field: keyof Room, oldValue: any, newValue: any) => {
   return `* ${emoji} **${name}**:\n * Old: \`\`${oldValueFormated}\`\`\n * New: \`\`${newValueFormated}\`\``
 }
 
-export const sendRoomUpdateMessage = async (update: SqlUpdate<any, Room>) => {
+export const sendEventUpdateMessage = async (update: SqlUpdate<any, Event>) => {
   assert(update)
   assert(update.isDiff)
   const activity = await connector.getOne(Activity, { id: update.newObject.activityId})
@@ -58,9 +58,9 @@ export const sendRoomUpdateMessage = async (update: SqlUpdate<any, Room>) => {
   const module = await connector.getOne(Module, { id: activity.moduleId })
   if (module === null) return
   const embed = new EmbedBuilder()
-    .setTitle("Room update")
+    .setTitle("Events update")
     .setColor("#3296d1")
-    .setDescription("*A room just got updated!*")
+    .setDescription("*An event just got updated!*")
     .setAuthor({
       name: "Oros",
       iconURL: "https://cdn.discordapp.com/attachments/1156230599619657758/1179455482772074656/image.png?ex=6579d884&is=65676384&hm=e13ec16751d23d910819da477798129806c5ee6d41f1406f9ce1a48fe4183a17"
@@ -88,7 +88,7 @@ export const sendRoomUpdateMessage = async (update: SqlUpdate<any, Room>) => {
   const updates = [] as string[]
   let updatesJoined = ''
 
-  for (const key of <Array<keyof Room>>Object.keys(update.oldObject)) {
+  for (const key of <Array<keyof Event>>Object.keys(update.oldObject)) {
     // Check if the key is in the new object
     if (!(Object.keys(update.newObject).indexOf(key) > -1)) continue
     // Check if the key is the id or the start (they should not be updated)
@@ -104,7 +104,7 @@ export const sendRoomUpdateMessage = async (update: SqlUpdate<any, Room>) => {
     }
 
     if (diff) {
-      if (key === 'room') {
+      if (key === 'location') {
         const registerButton: ButtonBuilder = new ButtonBuilder()
           .setEmoji("🔗")
           .setLabel("See Module")
@@ -121,13 +121,13 @@ export const sendRoomUpdateMessage = async (update: SqlUpdate<any, Room>) => {
           components: [registerButton, seeActivityButton,]
         })
 
-        const image = await createRoomImage(update.newObject, activity, module)
+        const image = await createEventImage(update.newObject, activity, module)
 
         // There is small icons, so we don't want to compress the image too much to avoid artifacts and blurriness
         const attachment = new AttachmentBuilder(image.createPNGStream({
           compressionLevel: 0,
           resolution: 400,
-        }), { name: 'room.png' })
+        }), { name: 'event.png' })
 
         const channel = isDev ? devChannel : updateChannel
         await channel?.send({ files: [attachment] , components: [row], content: "<@&" + promoMapping[module.promo] + "> Changement de salle !" })

@@ -1,4 +1,3 @@
-import Room from "../../../sql/objects/room"
 import { createCanvas, loadImage } from "canvas"
 import connector from "../../../sql/connector"
 import Activity from "../../../sql/objects/activity"
@@ -12,12 +11,13 @@ import dayjs from "dayjs"
 import timezone from "dayjs/plugin/timezone"
 import utc from "dayjs/plugin/utc"
 import { isDev } from "../../../index"
-import { Rooms } from "../../../intra/dto"
+import Location from "../../../sql/objects/location"
+import Event from "../../../sql/objects/event"
 dayjs.extend(timezone)
 dayjs.extend(utc)
 
-export const sendRoomCreatedMessage = async (room: Room) => {
-  const activity = await connector.getOne(Activity, {id: room.activityId})
+export const sendEventCreatedMessage = async (event: Event) => {
+  const activity = await connector.getOne(Activity, {id: event.activityId})
   assert(activity)
   const module = await connector.getOne(Module, {id: activity.moduleId})
   assert(module)
@@ -55,67 +55,25 @@ export const sendRoomCreatedMessage = async (room: Room) => {
     components: [iosButton, androidButton]
   })
 
-  const image = await createRoomImage(room, activity, module)
+  const image = await createEventImage(event, activity, module)
 
   // There is small icons, so we don't want to compress the image too much to avoid artifacts and blurriness
   const attachment = new AttachmentBuilder(image.createPNGStream({
     compressionLevel: 0,
     resolution: 400,
-  }), { name: 'room.png' })
+  }), { name: 'event.png' })
 
   const channel = isDev ? devChannel : updateChannel
-  if (isDev)
-    devChannel?.send({ content: '**🚧 DEV**\n```Json\n' + JSON.stringify(room, null, 2) + '```' })
 
   await channel?.send({ files: [attachment] , components: [row, downloadRow], content: "<@&" + promoMapping[module.promo] + "> Activité planifié !" })
 }
 
-const roomImagesMapping: {[key in Rooms]: string} = {
-  'Comté': "COMTE.png",
-  'Mordor': "MORDOR.jpg",
-  'Torvalds': "TORVALDS.png",
-  'Gallifrey': "GALLIFREY.png",
-  'Bourg Palette': "BOURG_PALETTE.png",
-  'Gotham': "GOTHAM.png",
-  'Hub Innovation': "HUB_INNOVATION.png",
-  'Poudlard': "POUDLARD.png",
-  'Tatooine': "TATOOINE.png",
-  'Vogons': "VOGONS.png",
-  'Westeros': "WESTEROS.png",
-  'Kamar-Taj': "KAMAR_TAJ.png",
-  'Accueil': "NA.png",
-  'Barney Stinson': "BARNEY_STINSON.png",
-  'Cafétéria': "CAFETERIA.png",
-  'Foyer': "FOYER.png",
-  'Hall': "HALL.png",
-  'Marty McFly': "MARTY_MCFLY.png",
-  'Nether': "NETHER.png",
-  'Petit Bureau Pédagogie': "NA.png",
-  'Visio Teams': "NA.png",
-  'Salle 105': "NA.png",
-  'Salle 106': "NA.png",
-  'Salle 111': "NA.png",
-  'Salle 111-A': "NA.png",
-  'Salle 111-B': "NA.png",
-  'Salle 112': "NA.png",
-  'Salle 112-A': "NA.png",
-  'Salle 112-B': "NA.png",
-  'Salle 114': "NA.png",
-  'Salle 115': "NA.png",
-  'Amphithéâtre': "NA.png",
-  'Salle 20': "NA.png",
-  'Salle L1 à L8': "NA.png",
-  'Extérieur': "NA.png",
-  'Cité des Congrès': "NA.png",
-  'La Cantine - Hall 6': "NA.png",
-  'Le Palace - Place Graslin': "NA.png",
-  'Valeuriad - 14 rue François Evellin': "NA.png"
-}
-
-export const createRoomImage = async (room: Room, activity: Activity, module: Module) => {
+export const createEventImage = async (event: Event, activity: Activity, module: Module) => {
   const activityNameSize = 100 + getTextWidthWithStyle(activity.name, 'bold 20px sans-serif')
   const moduleNameSize = 100 + getTextWidthWithStyle(module.name, 'bold 24px sans-serif')
-  const image = await loadImage("assets/rooms/" + roomImagesMapping[room.room])
+  const location = await connector.getOne(Location, {id: event.location})
+  assert(location)
+  const image = await loadImage("assets/rooms/" + location.imagePath ?? 'NA.png')
   const imageRatio = image.height / image.width
   const finalWidth = Math.max(400, activityNameSize, moduleNameSize)
   const height = Math.max(finalWidth * imageRatio, 200)
@@ -150,24 +108,24 @@ export const createRoomImage = async (room: Room, activity: Activity, module: Mo
   // Draw the activity start time
   ctx.font = 'bold 20px sans-serif'
   ctx.fillStyle = '#ffffff'
-  ctx.fillText(room.startToString(), 20, 90)
+  ctx.fillText(event.startToString(), 20, 90)
 
   // Draw the activity end time
   ctx.font = 'bold 20px sans-serif'
   ctx.fillStyle = '#ffffff'
-  ctx.fillText(room.endToString(), 20, 120)
+  ctx.fillText(event.endToString(), 20, 120)
 
-  if (room.sessionIndex !== 0) {
+  if (event.sessionIndex !== 0) {
     // Draw the session index
     ctx.font = 'bold 20px sans-serif'
     ctx.fillStyle = '#ffffff'
-    ctx.fillText("Session " + (room.sessionIndex + 1), 20, 150)
+    ctx.fillText("Session " + (event.sessionIndex + 1), 20, 150)
   }
 
   // Draw the room name in the bottom right corner
   ctx.font = 'bold 20px sans-serif'
   ctx.fillStyle = '#ffffff'
-  ctx.fillText(room.room, 20, canvas.height - 20)
+  ctx.fillText(location.name, 20, canvas.height - 20)
 
   return canvas
 }

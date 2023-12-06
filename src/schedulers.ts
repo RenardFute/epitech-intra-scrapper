@@ -4,13 +4,17 @@ import connector from "./sql/connector"
 import Module from "./sql/objects/module"
 import { scrapActivitiesForModule } from "./intra/activities"
 import Activity from "./sql/objects/activity"
-import { scrapRoomsForDate } from "./oros/rooms"
-import Room from "./sql/objects/room"
 import { scrapProjectForActivity } from "./intra/projects"
 import Project from "./sql/objects/project"
 import ModuleFlag from "./sql/objects/moduleFlag"
 import { ModuleFlags } from "./intra/dto"
 import { isDev } from "./index"
+import { scrapEventsForActivity } from "./intra/events"
+import { scrapLocations } from "./intra/locations"
+import Location from "./sql/objects/location"
+import LocationType from "./sql/objects/locationType"
+import LocationWithTypes from "./sql/objects/locationWithTypes"
+import Event from "./sql/objects/event"
 
 const hourFrequency = 1000 * 60 * 60 // Each hour
 
@@ -136,31 +140,76 @@ export const projectScrap = async (all?: boolean): Promise<ScrapStatistics> => {
 }
 
 /**
- * Scrap all rooms for the current day
+ * Scrap all events for either all activities or only ongoing activities
  * @returns Scrap statistics
  * @see ScrapStatistics
- * @see scrapRoomsForDate
+ * @see scrapEventsForActivity
  *
  * @since 1.0.0
  * @author Axel ECKENBERG
  */
-export const roomsScrap = async (): Promise<ScrapStatistics> => {
+export const eventsScrap = async (all?: boolean): Promise<ScrapStatistics> => {
+  const modulesSynced = await connector.getMany(Module, all ? undefined : {isOngoing: 1})
+  const activitiesSynced = (await connector.getMany(Activity)).filter((a) => modulesSynced.find((m) => m.id === a.moduleId))
   const stats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
-  let rooms = await scrapRoomsForDate(new Date())
-  stats.fetched = rooms.length
-  rooms = rooms.sort((a, b) => a.start.getTime() - b.start.getTime())
-  for (const room of rooms) {
-    const result = await connector.insertOrUpdate(Room, room, {id: room.id})
-    if (result) {
+  for (const activity of activitiesSynced) {
+    let events = await scrapEventsForActivity(activity)
+    stats.fetched += events.length
+    events = events.sort((a, b) => a.start.getTime() - b.start.getTime())
+    for (const event of events) {
+      const result = await connector.insertOrUpdate(Event, event, {id: event.id})
+      if (result) {
+        if (result.isDiff) {
+          stats.updated++
+        }
+      } else {
+        stats.inserted++
+      }
+    }
+  }
+  stats.time = Date.now() - stats.time
+  console.log("Events scrap done", new Date().toLocaleString(), stats)
+  return stats
+}
+
+export const locationsScrap = async (): Promise<{ locations: ScrapStatistics, types: ScrapStatistics }> => {
+  const locations = await scrapLocations()
+  const stats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
+  const typeStats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
+  for (const location of locations) {
+    const loc = await connector.insertOrUpdate(Location, location.location, {id: location.location.id})
+    stats.fetched++
+    if (loc) {
+      if (loc.isDiff) {
         stats.updated++
       }
     } else {
       stats.inserted++
     }
+    typeStats.fetched += location.types.length
+    await connector.delete(LocationWithTypes, {locationId: location.location.id})
+    for (const type of location.types) {
+      const locType = await connector.insertOrUpdate(LocationType, type, {id: type.id})
+      if (locType) {
+        if (locType.isDiff) {
+          typeStats.updated++
+        }
+      } else {
+        typeStats.inserted++
+      }
+      const binding = new LocationWithTypes().fromJson({
+        locationId: location.location.id,
+        locationTypeId: type.id,
+      })
+
+      await connector.insert(LocationWithTypes, binding)
+    }
   }
   stats.time = Date.now() - stats.time
-  console.log("Rooms scrap done", new Date().toLocaleString(), stats)
-  return stats
+  typeStats.time = Date.now() - typeStats.time
+  console.log("Locations scrap done", new Date().toLocaleString(), stats)
+  console.log("Location types scrap done", new Date().toLocaleString(), typeStats)
+  return { locations: stats, types: typeStats }
 }
 
 /**
@@ -168,7 +217,7 @@ export const roomsScrap = async (): Promise<ScrapStatistics> => {
  * Delay the start of the schedulers to the next hour
  * @see modulesScrap
  * @see activitiesScrap
- * @see roomsScrap
+ * @see eventsScrap
  * @see hourFrequency
  *
  * @since 1.0.0
@@ -193,8 +242,8 @@ export const startSchedulers = async () => {
   }, delayBeforeNextHour)
 
   setTimeout(() => {
-    roomsScrap().then()
-    setInterval(roomsScrap, hourFrequency)
+    eventsScrap().then()
+    setInterval(eventsScrap, hourFrequency)
   }, delayBeforeNextHour)
 
   setInterval(async () => {

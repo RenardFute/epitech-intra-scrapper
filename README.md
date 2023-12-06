@@ -92,19 +92,21 @@ create table activities
             on update cascade on delete cascade
 );
 ```
-### `rooms`
+### `events`
 ```sql
-create table rooms
+create table events
 (
-    id            varchar(255)           not null
+    id            varchar(255)                   not null
         primary key,
-    activity_id   varchar(255)           not null,
-    start         datetime               not null,
-    end           datetime               not null,
-    room          text default 'No Room' null,
-    session_index int  default 0         not null,
-    constraint rooms_activities_id_fk
-        foreign key (activity_id) references activities (id)
+    activity_id   varchar(255)                   not null,
+    start         datetime                       not null,
+    end           datetime                       not null,
+    location      varchar(255) default 'No Room' null,
+    session_index int          default 0         not null,
+    constraint events_activities_id_fk
+        foreign key (activity_id) references activities (id),
+    constraint events_locations_id_fk
+        foreign key (location) references locations (id)
 );
 ```
 

@@ -1,11 +1,11 @@
 import {
+  activityCodec,
+  activityDTO,
   detailedModuleCodec,
   detailedModuleDTO, detailedProjectCodec,
-  detailedProjectDTO,
+  detailedProjectDTO, LocationCodec, LocationDTO,
   moduleCodec,
-  moduleDTO,
-  RoomCodec,
-  RoomDTO
+  moduleDTO
 } from "./dto"
 import SourceUser from "../sql/objects/sourceUser"
 import Module from "../sql/objects/module"
@@ -15,6 +15,7 @@ import dayjs from "dayjs"
 import timezone from "dayjs/plugin/timezone"
 import utc from "dayjs/plugin/utc"
 import Activity from "../sql/objects/activity"
+import connector from "../sql/connector"
 dayjs.extend(timezone)
 dayjs.extend(utc)
 
@@ -67,13 +68,52 @@ export const fetchProjectForUser = async (user: SourceUser, activity: Activity):
   }
 }
 
-export const fetchRoomsForDay = async (date: Date): Promise<RoomDTO[]> => {
-  const dateFormatted = dayjs(date).tz("Europe/Paris").format("YYYY-MM-DD")
-  const url ="https://api.oros.dahobul.com/rooms-activities?from=" + dateFormatted + "&to=" + dateFormatted
-  const r = await fetch(url)
-
+export const fetchActivity = async (activity: Activity): Promise<activityDTO | null> => {
+  const module = await connector.getOne(Module, { id: activity.moduleId })
+  if (!module) {
+    console.error("No module found for activity", activity.id)
+    return null
+  }
+  const user = await connector.getOne(SourceUser, { promo: module.promo, disabled: 0 })
+  if (!user) {
+    console.error("No user found for module", module.id)
+    return null
+  }
+  const r = await fetch(activity.url + "?format=json", {
+    headers: {
+      "Cookie": "user="+user.cookie,
+    }
+  })
   const json = await r.json()
-  const result = t.array(RoomCodec).decode(json)
+  const result = activityCodec.decode(json)
+  if (isRight(result)) {
+    return result.right
+  } else {
+    console.error("Validation failed", result.left.map((e) => e.context))
+    throw new Error("Invalid API response")
+  }
+}
+
+export const fetchLocations = async (): Promise<Record<string, LocationDTO> | null> => {
+  const user = await connector.getOne(SourceUser, { disabled: 0 })
+  if (!user) {
+    console.error("No user available")
+    return null
+  }
+  const r = await fetch("https://intra.epitech.eu/location.js", {
+    headers: {
+      "Cookie": "user="+user.cookie,
+    }
+  })
+
+  const text = await r.text()
+  const regex = /window\.locations = (.*);/
+  const match = regex.exec(text)
+  if (!match) {
+    throw new Error("Invalid API response")
+  }
+  const json = JSON.parse(match[1])
+  const result = t.record(t.string, LocationCodec).decode(json)
   if (isRight(result)) {
     return result.right
   } else {

@@ -1,6 +1,6 @@
 import { EmbedBuilder, SlashCommandBuilder } from "discord.js"
 import { Command } from "../../index"
-import { activitiesScrap, modulesScrap, projectScrap, roomsScrap } from "../../../schedulers"
+import { activitiesScrap, locationsScrap, modulesScrap, projectScrap, eventsScrap } from "../../../schedulers"
 import { getSyncedPromos } from "../../../sql/objects/sourceUser"
 
 
@@ -18,7 +18,7 @@ export default {
     if (!type) {
       const moduleStats = await modulesScrap()
       const activitiesStats = await activitiesScrap(all)
-      const roomsStats = await roomsScrap()
+      const eventsStats = await eventsScrap(all)
       const projectStats = await projectScrap(all)
 
       const embed = new EmbedBuilder()
@@ -37,8 +37,8 @@ export default {
             inline: true,
           },
           {
-            name: "Rooms",
-            value: "``" + roomsStats.fetched + "`` fetched, ``" + roomsStats.inserted + "`` inserted, ``" + roomsStats.updated + "`` updated",
+            name: "Events",
+            value: "``" + eventsStats.fetched + "`` fetched, ``" + eventsStats.inserted + "`` inserted, ``" + eventsStats.updated + "`` updated",
             inline: true,
           },
           {
@@ -47,7 +47,7 @@ export default {
             inline: true,
           }]
         )
-        .setFooter({text: "Done in " + (moduleStats.time + activitiesStats.time + roomsStats.time + projectStats.time) + "ms"})
+        .setFooter({text: "Done in " + (moduleStats.time + activitiesStats.time + eventsStats.time + projectStats.time) + "ms"})
       await interaction.editReply({embeds: [embed]})
       return
     }
@@ -86,15 +86,15 @@ export default {
           )
           .setFooter({text: "Done in " + stats.time + "ms"})
         break
-      case 'rooms':
-        stats = await roomsScrap()
+      case 'events':
+        stats = await eventsScrap(all)
         embed = new EmbedBuilder()
           .setTitle("Update Results")
           .setColor("#3296d1")
           .setDescription("*Here are the results of the update*")
           .setFields([
             {
-              name: "Rooms",
+              name: "Events",
               value: "``" + stats.fetched + "`` fetched, ``" + stats.inserted + "`` inserted, ``" + stats.updated + "`` updated",
               inline: true,
             }]
@@ -115,6 +115,26 @@ export default {
             }]
           )
           .setFooter({text: "Done in " + stats.time + "ms"})
+        break
+      case 'locations':
+        stats = await locationsScrap()
+        embed = new EmbedBuilder()
+          .setTitle("Update Results")
+          .setColor("#3296d1")
+          .setDescription("*Here are the results of the update*")
+          .setFields([
+            {
+              name: "Locations",
+              value: "``" + stats.locations.fetched + "`` fetched, ``" + stats.locations.inserted + "`` inserted, ``" + stats.locations.updated + "`` updated",
+              inline: true,
+            },
+            {
+              name: "Types",
+              value: "``" + stats.types.fetched + "`` fetched, ``" + stats.types.inserted + "`` inserted, ``" + stats.types.updated + "`` updated",
+              inline: true,
+            }]
+          )
+          .setFooter({text: "Done in " + stats.locations.time + "ms"})
         break
       default:
         await interaction.editReply("Invalid type")

@@ -2,35 +2,35 @@ import { IdOf } from "../../utils/types"
 import Activity from "./activity"
 import { SqlType } from "../connector"
 import dayjs from "dayjs"
-import { Rooms } from "../../intra/dto"
+import Location from "./location"
 
 
-export default class Room extends SqlType{
+export default class Event extends SqlType{
   id: string
   activityId: IdOf<Activity>
   start: Date
   end: Date
-  room: Rooms
+  location: IdOf<Location>
   sessionIndex: number
 
-  static databaseName = "rooms"
+  static databaseName = "events"
 
   static getEmptyObject() {
-    return new Room()
+    return new Event()
   }
 
   constructor() {
     super()
-    this.id = "room-xxxx-0"
+    this.id = "event-xxxx-0"
     this.activityId = "acti-xxxx"
     this.start = new Date()
     this.end = new Date()
-    this.room = "Accueil"
+    this.location = "Accueil"
     this.sessionIndex = 0
   }
 
-  static computeId = (activityId: IdOf<Activity>, index: number): IdOf<Room> => {
-    return (activityId + "-" + index).replace("acti-", "room-")
+  static computeId = (activityId: IdOf<Activity>, index: number): IdOf<Event> => {
+    return (activityId + "-" + index).replace("acti-", "event-")
   }
 
   public startToString(): string {
@@ -41,21 +41,21 @@ export default class Room extends SqlType{
     return dayjs(this.end).utc().tz('Europe/Paris').format("HH[h]mm")
   }
 
-  equals(other: Room): boolean {
+  equals(other: Event): boolean {
     return this.id === other.id &&
       this.activityId === other.activityId &&
       this.start.getTime() === other.start.getTime() &&
       this.end.getTime() === other.end.getTime() &&
-      this.room === other.room &&
+      this.location === other.location &&
       this.sessionIndex === other.sessionIndex
   }
 
-  public fromJson(json: any): Room {
+  public fromJson(json: any): Event {
     this.id = json.id
     this.activityId = json.activityId
     this.start = new Date(json.start)
     this.end = new Date(json.end)
-    this.room = json.room
+    this.location = json.location
     this.sessionIndex = json.sessionIndex
     return this
   }
