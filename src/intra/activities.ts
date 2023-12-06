@@ -47,7 +47,7 @@ export const scrapActivitiesForModule = async (module: Module): Promise<Activity
   const user = await connector.getOne(SourceUser, { promo: module.promo, disabled: 0 })
   if (!user) {
     if (isDev)
-      console.error("No user found for module", module)
+      console.error("No user found for module", module.id)
     return []
   }
   const dto = await fetchModuleForUser(user, module)

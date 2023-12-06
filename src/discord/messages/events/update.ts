@@ -130,8 +130,6 @@ export const sendRoomUpdateMessage = async (update: SqlUpdate<any, Room>) => {
         }), { name: 'room.png' })
 
         const channel = isDev ? devChannel : updateChannel
-        if (isDev)
-          devChannel?.send({ content: '**🚧 DEV**\n```Json\n' + JSON.stringify(update, null, 2) + '```' })
         await channel?.send({ files: [attachment] , components: [row], content: "<@&" + promoMapping[module.promo] + "> Changement de salle !" })
 
         return

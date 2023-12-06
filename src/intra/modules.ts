@@ -27,13 +27,13 @@ const parseModule = async (dto: moduleDTO, source: SourceUser): Promise<Module |
     promo = Promo.TEKS
   }
 
-  const result = new Module().fromJson({
+  return new Module().fromJson({
     city,
     credits,
     end,
     endRegistration,
     id,
-    isOngoing: dto.active_promo === "1",
+    isOngoing: start.getTime() < Date.now() && end.getTime() > Date.now(),
     isRegistrationOpen: registrationStatus,
     isRoadblock: flags.indexOf(ModuleFlags.ROADBLOCK) > -1,
     isMandatory: flags.indexOf(ModuleFlags.REQUIRED) > -1,
@@ -46,7 +46,6 @@ const parseModule = async (dto: moduleDTO, source: SourceUser): Promise<Module |
     semester,
     url
   })
-  return result
 }
 
 export const createFlags = (flags: ModuleFlags[], module: Module): ModuleFlag[] => {
@@ -76,8 +75,8 @@ export const findFlags = (flags: number): ModuleFlags[] => {
 export const scrapModulesForPromo = async (promo: Promo): Promise<{ module: Module, flags: number }[]> => {
   const user = await connector.getOne(SourceUser, { promo: promo, disabled: 0 })
   if (!user) {
-    // TODO: Send error message with discord bot
-    throw new Error("No user found")
+    console.error("No user found for promo", promo)
+    return []
   }
   const dto = await fetchModulesForUser(user)
   const modules: { module: Module, flags: number }[] = []

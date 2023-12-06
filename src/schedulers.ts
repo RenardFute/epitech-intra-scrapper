@@ -6,10 +6,6 @@ import { scrapActivitiesForModule } from "./intra/activities"
 import Activity from "./sql/objects/activity"
 import { scrapRoomsForDate } from "./oros/rooms"
 import Room from "./sql/objects/room"
-import { sendModuleUpdateMessage } from "./discord/messages/modules/update"
-import { sendModuleCreatedMessage } from "./discord/messages/modules/new"
-import { sendRoomCreatedMessage } from "./discord/messages/oros/new"
-import { sendRoomUpdateMessage } from "./discord/messages/oros/update"
 import { scrapProjectForActivity } from "./intra/projects"
 import Project from "./sql/objects/project"
 import ModuleFlag from "./sql/objects/moduleFlag"
@@ -48,11 +44,9 @@ export const modulesScrap = async (): Promise<ScrapStatistics> => {
       if (result) {
         if (result.isDiff) {
           stats.updated++
-          await sendModuleUpdateMessage(result)
         }
       } else {
         stats.inserted++
-        await sendModuleCreatedMessage(r.module)
       }
       await connector.delete(ModuleFlag, { moduleId: r.module.id })
       const flagsToInsert = createFlags(findFlags(r.flags), r.module)
@@ -93,11 +87,9 @@ export const activitiesScrap = async (all?: boolean): Promise<ScrapStatistics> =
       const result = await connector.insertOrUpdate(Activity, a, {id: a.id})
       if (result) {
         if (result.isDiff) {
-          // TODO: Notify activity update
           stats.updated++
         }
       } else {
-        // TODO: Notify new activity
         stats.inserted++
       }
     }
@@ -132,11 +124,9 @@ export const projectScrap = async (all?: boolean): Promise<ScrapStatistics> => {
     const result = await connector.insertOrUpdate(Project, project, {activityId: project.activityId})
     if (result) {
       if (result.isDiff) {
-        // TODO: Notify project update
         stats.updated++
       }
     } else {
-      // TODO: Notify new project
       stats.inserted++
     }
   }
@@ -162,12 +152,9 @@ export const roomsScrap = async (): Promise<ScrapStatistics> => {
   for (const room of rooms) {
     const result = await connector.insertOrUpdate(Room, room, {id: room.id})
     if (result) {
-      if (result.isDiff) {
-        await sendRoomUpdateMessage(result)
         stats.updated++
       }
     } else {
-      await sendRoomCreatedMessage(room)
       stats.inserted++
     }
   }

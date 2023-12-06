@@ -34,13 +34,13 @@ export const scrapProjectForActivity = async (activity: Activity): Promise<Proje
   const module = await connector.getOne(Module, { id: activity.moduleId })
   if (!module) {
     if (isDev)
-      console.error("No module found for activity", activity)
+      console.error("No module found for activity", activity.id)
     return null
   }
   const user = await connector.getOne(SourceUser, { promo: module.promo, disabled: 0 })
   if (!user) {
     if (isDev)
-      console.error("No user found for module", module)
+      console.error("No user found for module", module.id)
     return null
   }
   const dto = await fetchProjectForUser(user, activity)

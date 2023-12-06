@@ -90,8 +90,6 @@ export const sendModuleCreatedMessage = async (newModule: Module) => {
   }), { name: 'module.png' })
 
   const channel = isDev ? devChannel : updateChannel
-  if (isDev)
-    devChannel?.send({ content: '**🚧 DEV**\n```Json\n' + JSON.stringify(newModule, null, 2) + '```' })
   await channel?.send({ files: [attachment] , components: [row], content: "<@&" + promoMapping[newModule.promo] + "> Nouveau module !" })
 }
 

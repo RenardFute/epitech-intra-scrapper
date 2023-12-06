@@ -170,7 +170,5 @@ export const sendModuleUpdateMessage = async (update: SqlUpdate<any, Module>) =>
   ])
 
   const channel = isDev ? devChannel : updateChannel
-  if (isDev)
-    devChannel?.send({ content: '**🚧 DEV**\n```Json\n' + JSON.stringify(update, null, 2) + '```' })
   channel?.send({ embeds: [embed] })
 }

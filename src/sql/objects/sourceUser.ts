@@ -1,5 +1,4 @@
 import connector, { SqlBoolean, SqlType } from "../connector"
-import { updateChannel } from "../../discord"
 import Activity from "./activity"
 import Module from "./module"
 
@@ -207,7 +206,6 @@ export const getSyncedPromos = async (): Promise<Promo[]> => {
     if (isLogged) {
       promos.push(user.promo)
     } else {
-      updateChannel?.send(`${user} is not logged in anymore, please update your cookie.`)
       user.disabled = true
       await connector.update(SourceUser, user, { discordUserId: user.discordUserId })
     }

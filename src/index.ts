@@ -14,5 +14,5 @@ import { startSchedulers } from "./schedulers"
 export const isDev: boolean = process.env.NODE_ENV === "development" ?? false
 
 if (!isDev) {
-  startSchedulers()
+  startSchedulers().then()
 }
