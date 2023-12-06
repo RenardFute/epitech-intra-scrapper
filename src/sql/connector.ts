@@ -1,5 +1,7 @@
 import mysql from "mysql"
 import 'dotenv/config'
+import SqlType from "./sqlType"
+import { SqlBoolean, SqlUpdate } from "./types"
 
 /**
  * A class to connect to a MySQL database
@@ -185,8 +187,6 @@ export class SqlConnect {
         })
         if (trueKey.startsWith('is') || trueKey.startsWith('has')) {
           object[<keyof K>trueKey] = (row[key] === 1) as SqlBoolean as K[keyof K]
-        } else if (trueKey.startsWith('json')) {
-          object[<keyof K>trueKey] = JSON.parse(row[key]) as SqlJson as K[keyof K]
         } else {
           object[<keyof K>trueKey] = row[key]
         }
@@ -426,53 +426,6 @@ export class SqlConnect {
 }
 
 /**
- * A class to represent a type in the database
- * @class
- * @property {string} databaseName The name of the table in the database
- * @property {() => SqlType} getEmptyObject A function that returns an empty object of the type
- * @abstract
- * @category SQL
- * @since 1.0.0
- */
-export abstract class SqlType {
-  /**
-   * The name of the table in the database
-   * @type {string}
-   * @category SQL
-   * @since 1.0.0
-   * @author Axel ECKENBERG
-   */
-  static databaseName: string
-  static getEmptyObject: () => SqlType
-
-  /**
-   * Check if two objects are equal
-   * @param other - The object to compare to
-   * @returns {boolean} True if the objects are equal, false otherwise
-   * @category SQL
-   * @since 1.0.0
-   * @method
-   * @public
-   * @abstract
-   * @author Axel ECKENBERG
-   */
-  abstract equals(other: SqlType): boolean
-
-  /**
-   * Convert an object to JSON
-   * @param json - The JSON representation of the object
-   * @returns {SqlType} The object
-   * @category SQL
-   * @since 1.0.0
-   * @method
-   * @public
-   * @abstract
-   * @author Axel ECKENBERG
-   */
-  abstract fromJson(json: any): SqlType
-}
-
-/**
  * A type to filter objects in the database
  * @template T The type of the objects to filter (has to extend SqlType)
  * @category SQL
@@ -497,29 +450,3 @@ export type SqlFilter<T extends abstract new (...args: any) => any> = {
  * @author Axel
  */
 export default new SqlConnect()
-
-/**
- * A type to represent a boolean in the database (0 or 1 instead of true or false)
- * @category SQL
- * @since 1.0.0
- * @type {boolean | number}
- */
-export type SqlBoolean = boolean | number
-/**
- * A type to represent JSON in the database (stringified JSON instead of JSON)
- * @category SQL
- * @since 1.0.0
- * @type {unknown | string}
- */
-export type SqlJson = unknown | string
-/**
- * A type to represent the result of an insertOrUpdate operation
- * @category SQL
- * @since 1.0.0
- * @type {{ isDiff: boolean, oldObject: K, newObject: K } | void}
- * @template T The type of the object to insert or update (has to extend SqlType)
- * @template K The instance type of the object to insert or update
- * @see SqlType
- * @author Axel ECKENBERG
- */
-export type SqlUpdate<T extends typeof SqlType, K extends InstanceType<T>> = { isDiff: boolean, oldObject: K, newObject: K } | void
