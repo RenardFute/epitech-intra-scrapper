@@ -376,6 +376,7 @@ export class SqlConnect {
  * @since 1.0.0
  * @author Axel ECKENBERG
  */
+// TODO Refactor this to be more polyvalent and use new decorators
 export type SqlFilter<T extends abstract new (...args: any) => any> = {
   [P in keyof InstanceType<T>]?: InstanceType<T>[P];
 } & {
