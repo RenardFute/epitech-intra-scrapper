@@ -12,6 +12,7 @@ import { createEventImage } from "./new"
 import { isDev } from "../../../index"
 import Event from "../../../sql/objects/event"
 import { SqlUpdate } from "../../../sql/types"
+import SqlFilter from "../../../sql/sqlFilter"
 dayjs.extend(timezone)
 dayjs.extend(utc)
 
@@ -54,10 +55,10 @@ const formatUpdate = (field: keyof Event, oldValue: any, newValue: any) => {
 export const sendEventUpdateMessage = async (update: SqlUpdate<any, Event>) => {
   assert(update)
   assert(update.isDiff)
-  const activity = update.newObject.activity instanceof Activity ? update.newObject.activity : await connector.getOne(Activity, { id: update.newObject.activity})
+  const activity = update.newObject.activity instanceof Activity ? update.newObject.activity : await connector.getOne(Activity, SqlFilter.from(Activity, { id: update.newObject.activity}))
   if (activity === null) return
   assert(typeof activity.module === 'number')
-  const module = await connector.getOne(Module, { id: activity.module })
+  const module = await connector.getOne(Module, SqlFilter.from(Module, { id: activity.module }))
   if (module === null) return
   const embed = new EmbedBuilder()
     .setTitle("Events update")

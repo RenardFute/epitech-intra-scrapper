@@ -2,7 +2,8 @@ import { ColumnInfos, executeManyToMany, RelationType } from "./annotations"
 import { SqlTypes } from "./types"
 import assert from "assert"
 import dayjs from "dayjs"
-import connector, { SqlFilter } from "./connector"
+import connector from "./connector"
+import SqlFilter, { EasySqlFilter } from "./sqlFilter"
 
 /**
  * A class to represent a type in the database
@@ -135,18 +136,18 @@ export default abstract class SqlType {
     const promises = columnDecoratedKeys.map(async key => {
       const relation = Reflect.getMetadata('relation', this, key.toString())
       let value
-      const filter: SqlFilter<any> = {}
+      const filter: EasySqlFilter<any> = {}
       switch (relation.relationType) {
         case RelationType.MANY_TO_MANY:
           value = await executeManyToMany(this, relation)
           break
         case RelationType.MANY_TO_ONE:
           filter.id = this[key]
-          value = await connector.getOne(relation.targetEntity, filter)
+          value = await connector.getOne(relation.targetEntity, SqlFilter.from(relation.targetEntity, filter))
           break
         case RelationType.ONE_TO_MANY:
           filter[relation.inverseProperty] = this.id
-          value = await connector.getMany(relation.targetEntity, filter)
+          value = await connector.getMany(relation.targetEntity, SqlFilter.from(relation.targetEntity, filter))
           break
         case RelationType.ONE_TO_ONE:
           break

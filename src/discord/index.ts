@@ -4,6 +4,7 @@ import path from "path"
 import * as fs from "fs"
 import SourceUser, { Promo } from "../sql/objects/sourceUser"
 import connector from "../sql/connector"
+import SqlFilter from "../sql/sqlFilter"
 
 type CustomClient = Client & { commands: Collection<string, Command> }
 export type Command = { data: SlashCommandBuilder, execute: (client: Client, interaction: any) => Promise<void> }
@@ -198,7 +199,7 @@ client.on(Events.InteractionCreate, async interaction => {
       }
     }
 
-    const result = await connector.insertOrUpdate(SourceUser, sourceUser, { id: sourceUser.id })
+    const result = await connector.insertOrUpdate(SourceUser, sourceUser, SqlFilter.from(SourceUser, { id: sourceUser.id }))
     if (result) {
       if (result.isDiff) {
         await interaction.editReply({ content: "✅ Utilisateur mis à jour !"})

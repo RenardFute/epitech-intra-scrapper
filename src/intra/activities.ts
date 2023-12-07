@@ -6,6 +6,7 @@ import { fetchModuleForUser } from "./scrappers"
 import { activityDTO } from "./dto"
 import dayjs from "dayjs"
 import { isDev } from "../index"
+import SqlFilter from "../sql/sqlFilter"
 
 const parseActivity = async (dto: activityDTO, module: Module): Promise<Activity> => {
   const name = dto.title
@@ -44,7 +45,7 @@ const parseActivity = async (dto: activityDTO, module: Module): Promise<Activity
 }
 
 export const scrapActivitiesForModule = async (module: Module): Promise<Activity[]> => {
-  const user = await connector.getOne(SourceUser, { promo: module.promo, disabled: false })
+  const user = await connector.getOne(SourceUser, SqlFilter.from(SourceUser, { promo: module.promo, disabled: false }))
   if (!user) {
     if (isDev)
       console.error("No user found for module", module.id)

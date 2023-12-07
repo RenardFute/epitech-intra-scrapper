@@ -7,6 +7,7 @@ import { detailedProjectDTO } from "./dto"
 import dayjs from "dayjs"
 import Project from "../sql/objects/project"
 import { isDev } from "../index"
+import SqlFilter from "../sql/sqlFilter"
 
 const parseProject = async (dto: detailedProjectDTO, activity: Activity, _module: Module): Promise<Project> => {
   const name = dto.title
@@ -31,13 +32,13 @@ const parseProject = async (dto: detailedProjectDTO, activity: Activity, _module
 }
 
 export const scrapProjectForActivity = async (activity: Activity): Promise<Project | null> => {
-  const module = activity.module instanceof Module ? activity.module : await connector.getOne(Module, { id: activity.module })
+  const module = activity.module instanceof Module ? activity.module : await connector.getOne(Module, SqlFilter.from(Module, { id: activity.module }))
   if (!module) {
     if (isDev)
       console.error("No module found for activity", activity.id)
     return null
   }
-  const user = await connector.getOne(SourceUser, { promo: module.promo, disabled: false })
+  const user = await connector.getOne(SourceUser, SqlFilter.from(SourceUser, { promo: module.promo, disabled: false }))
   if (!user) {
     if (isDev)
       console.error("No user found for module", module.id)

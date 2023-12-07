@@ -16,6 +16,7 @@ import timezone from "dayjs/plugin/timezone"
 import utc from "dayjs/plugin/utc"
 import Activity from "../sql/objects/activity"
 import connector from "../sql/connector"
+import SqlFilter from "../sql/sqlFilter"
 dayjs.extend(timezone)
 dayjs.extend(utc)
 
@@ -69,12 +70,12 @@ export const fetchProjectForUser = async (user: SourceUser, activity: Activity):
 }
 
 export const fetchActivity = async (activity: Activity): Promise<activityDTO | null> => {
-  const module = activity.module instanceof Module ? activity.module : await connector.getOne(Module, { id: activity.module })
+  const module = activity.module instanceof Module ? activity.module : await connector.getOne(Module, SqlFilter.from(Module,{ id: activity.module }))
   if (!module) {
     console.error("No module found for activity", activity.id)
     return null
   }
-  const user = await connector.getOne(SourceUser, { promo: module.promo, disabled: false })
+  const user = await connector.getOne(SourceUser, SqlFilter.from(SourceUser,{ promo: module.promo, disabled: false }))
   if (!user) {
     console.error("No user found for module", module.id)
     return null
@@ -95,7 +96,7 @@ export const fetchActivity = async (activity: Activity): Promise<activityDTO | n
 }
 
 export const fetchLocations = async (): Promise<Record<string, LocationDTO> | null> => {
-  const user = await connector.getOne(SourceUser, { disabled: false })
+  const user = await connector.getOne(SourceUser, SqlFilter.from(SourceUser,{ disabled: false }))
   if (!user) {
     console.error("No user available")
     return null

@@ -4,6 +4,7 @@ import Module from "./module"
 import SqlType from "../sqlType"
 import assert from "assert"
 import { Column, Table } from "../annotations"
+import SqlFilter from "../sqlFilter"
 
 /**
  * Enum representing the different promos
@@ -146,11 +147,11 @@ export default class SourceUser extends SqlType {
   }
 
   public async getActivityFromName(name: string): Promise<Activity | null> {
-    const activities = await connector.getMany(Activity, { name: name })
+    const activities = await connector.getMany(Activity, SqlFilter.from(Activity,{ name: name }))
     if (!activities) return null
     for (const activity of activities) {
       assert(typeof activity.module === 'number')
-      const module = await connector.getOne(Module, { id: activity.module })
+      const module = await connector.getOne(Module, SqlFilter.from(Module,{ id: activity.module }))
       if (!module) continue
       if (module.promo !== this.promo) continue
       return activity
@@ -177,7 +178,7 @@ export default class SourceUser extends SqlType {
   }
 
   public getModules(): Promise<Module[]> {
-    return connector.getMany(Module, { promo: this.promo })
+    return connector.getMany(Module, SqlFilter.from(Module,{ promo: this.promo }))
   }
 }
 
@@ -191,10 +192,10 @@ export const isUserStillLoggedIn = async (user: SourceUser): Promise<boolean> =>
   const isLoggedOut = 'message' in json && json.message === 'Veuillez vous connecter'
   if (isLoggedOut) {
     user.disabled = true
-    await connector.update(SourceUser, user, { id: user.id })
+    await connector.update(SourceUser, user, SqlFilter.from(SourceUser,{ id: user.id }))
   } else {
     user.disabled = false
-    await connector.update(SourceUser, user, { id: user.id })
+    await connector.update(SourceUser, user, SqlFilter.from(SourceUser,{ id: user.id }))
   }
   return !isLoggedOut
 }
@@ -208,7 +209,7 @@ export const getSyncedPromos = async (): Promise<Promo[]> => {
       promos.push(user.promo)
     } else {
       user.disabled = true
-      await connector.update(SourceUser, user, { id: user.id })
+      await connector.update(SourceUser, user, SqlFilter.from(SourceUser,{ id: user.id }))
     }
   }
   return promos.filter((promo, index, self) => self.indexOf(promo) === index)

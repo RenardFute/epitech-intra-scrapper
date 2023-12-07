@@ -13,6 +13,7 @@ import { scrapEventsForActivity } from "./intra/events"
 import { scrapLocations } from "./intra/locations"
 import Location from "./sql/objects/location"
 import Event from "./sql/objects/event"
+import SqlFilter from "./sql/sqlFilter"
 
 const hourFrequency = 1000 * 60 * 60 // Each hour
 
@@ -42,7 +43,7 @@ export const modulesScrap = async (): Promise<ScrapStatistics> => {
     const modules = await scrapModulesForPromo(promo)
     stats.fetched = modules.length
     for (const r of modules) {
-      const result = await connector.insertOrUpdate(Module, r.module, {id: r.module.id})
+      const result = await connector.insertOrUpdate(Module, r.module, SqlFilter.from(Module,{id: r.module.id}))
       if (result) {
         if (result.isDiff) {
           stats.updated++
@@ -50,7 +51,7 @@ export const modulesScrap = async (): Promise<ScrapStatistics> => {
       } else {
         stats.inserted++
       }
-      await connector.delete(ModuleFlag, { moduleId: r.module.id })
+      await connector.delete(ModuleFlag, SqlFilter.from(ModuleFlag,{ moduleId: r.module.id }))
       const flagsToInsert = createFlags(findFlags(r.flags), r.module)
       for (const flag of flagsToInsert) {
         if (flagsToInsert.length > 1 && flag.flag === ModuleFlags.NONE)
@@ -80,13 +81,13 @@ export const modulesScrap = async (): Promise<ScrapStatistics> => {
  * @since 1.0.0
  */
 export const activitiesScrap = async (all?: boolean): Promise<ScrapStatistics> => {
-  const modulesSynced = await connector.getMany(Module, all ? undefined : {isOngoing: true})
+  const modulesSynced = await connector.getMany(Module, all ? undefined : SqlFilter.from(Module,{isOngoing: true}))
   const stats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
   for (const module of modulesSynced) {
     const activities = await scrapActivitiesForModule(module)
     stats.fetched += activities.length
     for (const a of activities) {
-      const result = await connector.insertOrUpdate(Activity, a, {id: a.id})
+      const result = await connector.insertOrUpdate(Activity, a, SqlFilter.from(Activity,{id: a.id}))
       if (result) {
         if (result.isDiff) {
           stats.updated++
@@ -112,8 +113,8 @@ export const activitiesScrap = async (all?: boolean): Promise<ScrapStatistics> =
  * @since 1.0.0
  */
 export const projectScrap = async (all?: boolean): Promise<ScrapStatistics> => {
-  const modulesSynced = await connector.getMany(Module, all ? undefined : {isOngoing: true})
-  const activitiesSynced = (await connector.getMany(Activity, {isProject: true})).filter((a) => modulesSynced.find((m) => m.id === a.module))
+  const modulesSynced = await connector.getMany(Module, all ? undefined : SqlFilter.from(Module,{isOngoing: true}))
+  const activitiesSynced = (await connector.getMany(Activity, SqlFilter.from(Activity,{isProject: true}))).filter((a) => modulesSynced.find((m) => m.id === a.module))
   const stats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
   for (const activity of activitiesSynced) {
     const project = await scrapProjectForActivity(activity)
@@ -123,7 +124,7 @@ export const projectScrap = async (all?: boolean): Promise<ScrapStatistics> => {
       continue
     }
     stats.fetched += 1
-    const result = await connector.insertOrUpdate(Project, project, {activity: project.activity})
+    const result = await connector.insertOrUpdate(Project, project, SqlFilter.from(Project,{activity: project.activity}))
     if (result) {
       if (result.isDiff) {
         stats.updated++
@@ -147,7 +148,7 @@ export const projectScrap = async (all?: boolean): Promise<ScrapStatistics> => {
  * @author Axel ECKENBERG
  */
 export const eventsScrap = async (all?: boolean): Promise<ScrapStatistics> => {
-  const modulesSynced = await connector.getMany(Module, all ? undefined : {isOngoing: true})
+  const modulesSynced = await connector.getMany(Module, all ? undefined : SqlFilter.from(Module,{isOngoing: true}))
   const activitiesSynced = (await connector.getMany(Activity)).filter((a) => modulesSynced.find((m) => m.id === a.module))
   const stats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
   for (const activity of activitiesSynced) {
@@ -155,7 +156,7 @@ export const eventsScrap = async (all?: boolean): Promise<ScrapStatistics> => {
     stats.fetched += events.length
     events = events.sort((a, b) => a.start.getTime() - b.start.getTime())
     for (const event of events) {
-      const result = await connector.insertOrUpdate(Event, event, {id: event.id})
+      const result = await connector.insertOrUpdate(Event, event, SqlFilter.from(Event,{id: event.id}))
       if (result) {
         if (result.isDiff) {
           stats.updated++
@@ -174,7 +175,7 @@ export const locationsScrap = async (): Promise<ScrapStatistics> => {
   const locations = await scrapLocations()
   const stats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
   for (const location of locations) {
-    const loc = await connector.insertOrUpdate(Location, location, {id: location.id})
+    const loc = await connector.insertOrUpdate(Location, location, SqlFilter.from(Location,{id: location.id}))
     stats.fetched++
     if (loc) {
       if (loc.isDiff) {

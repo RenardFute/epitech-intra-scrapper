@@ -2,6 +2,7 @@ import mysql from "mysql"
 import 'dotenv/config'
 import SqlType from "./sqlType"
 import { SqlUpdate } from "./types"
+import SqlFilter from "./sqlFilter"
 
 /**
  * A class to connect to a MySQL database
@@ -170,9 +171,8 @@ export class SqlConnect {
    * @see SqlType
    */
   public async getMany<T extends typeof SqlType, K extends InstanceType<T>>(type: T, filter?: SqlFilter<T>): Promise<K[]> {
-    const query = filter ? `SELECT * FROM ${type.getTableName()} WHERE ?` : `SELECT * FROM ${type.getTableName()}`
-    const values: SqlFilter<T> = filter ?? {}
-    const result = await this.query(query, values)
+    const query = filter ? `SELECT * FROM ${type.getTableName()} WHERE ${filter.toString()}` : `SELECT * FROM ${type.getTableName()}`
+    const result = await this.query(query)
     const objects = [] as K[]
     for (const row of result) {
       const object = type.fromSQLResult(type, row) as K
@@ -364,24 +364,9 @@ export class SqlConnect {
    * @author Axel ECKENBERG
    */
   public delete<T extends typeof SqlType>(type: T, filter: SqlFilter<T>): Promise<void> {
-    const query = `DELETE FROM ${type.getTableName()} WHERE ?`
-    return this.query(query, filter)
+    const query = `DELETE FROM ${type.getTableName()} WHERE ${filter.toString()}`
+    return this.query(query)
   }
-}
-
-/**
- * A type to filter objects in the database
- * @template T The type of the objects to filter (has to extend SqlType)
- * @category SQL
- * @since 1.0.0
- * @author Axel ECKENBERG
- */
-// TODO Refactor this to be more polyvalent and use new decorators
-export type SqlFilter<T extends abstract new (...args: any) => any> = {
-  [P in keyof InstanceType<T>]?: InstanceType<T>[P];
-} & {
-  prototype?: never;
-  databaseName?: never;
 }
 
 /**
