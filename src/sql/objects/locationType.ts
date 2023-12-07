@@ -1,15 +1,18 @@
-import { SqlType } from "../connector"
 import { IdOf } from "../../utils/types"
 import { hashString } from "../../utils/strings"
+import SqlType from "../sqlType"
+import { Column, Table } from "../annotations"
 
-
+@Table('locations_types')
 export default class LocationType extends SqlType {
-  id: number
-  seats: number
-  type: string
-  name: string
-
-  static databaseName = "locations_types"
+  @Column()
+  public id: number
+  @Column()
+  public seats: number
+  @Column()
+  public type: string
+  @Column()
+  public name: string
 
   static getEmptyObject() {
     return new LocationType()

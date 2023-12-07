@@ -1,7 +1,7 @@
 import mysql from "mysql"
 import 'dotenv/config'
 import SqlType from "./sqlType"
-import { SqlBoolean, SqlUpdate } from "./types"
+import { SqlUpdate } from "./types"
 
 /**
  * A class to connect to a MySQL database
@@ -134,9 +134,6 @@ export class SqlConnect {
   public async query(query: string, ...values: any): Promise<any> {
     if (!this.isConnected()) await this.connect()
     query = mysql.format(query, values)
-    query = query.replaceAll(/([a-z])([A-Z])(?=[^=']*=[^=]*)/g, (_, p1, p2) => {
-      return `${p1}_${p2.toLowerCase()}`
-    })
     query = query.replaceAll(/(?<=WHERE.*)(`[a-z_]+` = (\d+|'([^']|\\')*'))(,)/gm, '$1 AND')
     if (process.env.SHOW_SQL_QUERIES === "true")
       console.log(query)
@@ -173,24 +170,12 @@ export class SqlConnect {
    * @see SqlType
    */
   public async getMany<T extends typeof SqlType, K extends InstanceType<T>>(type: T, filter?: SqlFilter<T>): Promise<K[]> {
-    const query = filter ? `SELECT * FROM ${type.databaseName} WHERE ?` : `SELECT * FROM ${type.databaseName}`
+    const query = filter ? `SELECT * FROM ${type.getTableName()} WHERE ?` : `SELECT * FROM ${type.getTableName()}`
     const values: SqlFilter<T> = filter ?? {}
-
     const result = await this.query(query, values)
     const objects = [] as K[]
     for (const row of result) {
-      const object = type.getEmptyObject() as K
-      for (const key in row) {
-        // Revert snake_case
-        const trueKey = key.replaceAll(/_([a-z])/gm, (_, p1) => {
-          return p1.toUpperCase()
-        })
-        if (trueKey.startsWith('is') || trueKey.startsWith('has')) {
-          object[<keyof K>trueKey] = (row[key] === 1) as SqlBoolean as K[keyof K]
-        } else {
-          object[<keyof K>trueKey] = row[key]
-        }
-      }
+      const object = type.fromSQLResult(type, row) as K
       objects.push(object)
     }
     return objects
@@ -259,10 +244,9 @@ export class SqlConnect {
    * @see prepareObject
    * @author Axel ECKENBERG
    */
-  public async insert<T extends typeof SqlType, K extends InstanceType<T>>(type: T, object: K): Promise<void> {
-    const query = `INSERT INTO ${type.databaseName} SET ?`
+  public async insert<T extends typeof SqlType, K extends InstanceType<T>>(object: K): Promise<void> {
+    const query = `INSERT INTO ${object.getTableName()} SET ${object.toSQLReady()}`
 
-    object = this.prepareObject(object)
     await this.query(query, object)
   }
 
@@ -298,52 +282,12 @@ export class SqlConnect {
    * @author Axel ECKENBERG
    */
   public async update<T extends typeof SqlType, K extends InstanceType<T>>(type: T, object: K, filter?: SqlFilter<T>): Promise<boolean> {
-    const query = `UPDATE ${type.databaseName} SET ? WHERE ?`
+    const query = `UPDATE ${object.getTableName()} SET ${object.toSQLReady()} WHERE ?`
     const old = await this.getOne(type, filter) as K
     if (!old) return false
 
-    object = this.prepareObject(object)
     const result = await this.query(query, object, filter ?? {})
     return result.changedRows > 0
-  }
-
-  /**
-   * Prepare an object to be inserted or updated
-   * Convert is* and has* to 0 or 1
-   * Convert json* to stringified JSON
-   * @param object - The object to prepare
-   *
-   * @returns {K} The prepared object
-   * @template K The type of the object to prepare
-   * @category SQL
-   *
-   * @example
-   * const connector = new SqlConnect()
-   * connector.prepareObject({ id: 1, name: "Axel", isStudent: true, hasDiscord: false, json: { test: true } }) // { id: 1, name: "Axel", isStudent: 1, hasDiscord: 0, json: '{"test":true}' }
-   *
-   * @since 1.0.0
-   * @method
-   * @private
-   * @see insert
-   * @see update
-   * @see SqlType
-   * @see SqlBoolean
-   * @see SqlJson
-   *
-   * @author Axel ECKENBERG
-   */
-  private prepareObject<K>(object: K): K {
-    const duplicate = { ...object }
-    for (const key in duplicate) {
-      if (key.toLowerCase().startsWith('is') || key.toLowerCase().startsWith('has')) {
-        duplicate[<keyof K>key] = (object[<keyof K>key] ? 1 : 0) as K[keyof K]
-      } else if (key.toLowerCase().startsWith('json')) {
-        duplicate[<keyof K>key] = JSON.stringify(object[<keyof K>key]) as K[keyof K]
-      } else if (duplicate[<keyof K>key] === undefined) {
-        delete duplicate[<keyof K>key]
-      }
-    }
-    return duplicate
   }
 
   /**
@@ -392,7 +336,7 @@ export class SqlConnect {
     }
 
     // Otherwise we insert it and return nothing
-    await this.insert(type, object)
+    await this.insert(object)
     return
   }
 
@@ -420,7 +364,7 @@ export class SqlConnect {
    * @author Axel ECKENBERG
    */
   public delete<T extends typeof SqlType>(type: T, filter: SqlFilter<T>): Promise<void> {
-    const query = `DELETE FROM ${type.databaseName} WHERE ?`
+    const query = `DELETE FROM ${type.getTableName()} WHERE ?`
     return this.query(query, filter)
   }
 }

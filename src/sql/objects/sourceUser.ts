@@ -1,6 +1,8 @@
-import connector, { SqlBoolean, SqlType } from "../connector"
+import connector from "../connector"
 import Activity from "./activity"
 import Module from "./module"
+import SqlType from "../sqlType"
+import assert from "assert"
 
 /**
  * Enum representing the different promos
@@ -107,7 +109,7 @@ export default class SourceUser extends SqlType {
    * @see SqlBoolean
    * @author Axel ECKENBERG
    */
-  disabled: SqlBoolean
+  disabled: boolean
   /**
    * The name of the database table
    * @type {string}
@@ -149,7 +151,8 @@ export default class SourceUser extends SqlType {
     const activities = await connector.getMany(Activity, { name: name })
     if (!activities) return null
     for (const activity of activities) {
-      const module = await connector.getOne(Module, { id: activity.moduleId })
+      assert(typeof activity.module === 'number')
+      const module = await connector.getOne(Module, { id: activity.module })
       if (!module) continue
       if (module.promo !== this.promo) continue
       return activity

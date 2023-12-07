@@ -1,19 +1,27 @@
 import { IdOf } from "../../utils/types"
 import Activity from "./activity"
-import { SqlType } from "../connector"
 import dayjs from "dayjs"
 import Location from "./location"
+import SqlType from "../sqlType"
+import { Column, ManyToOne, Table } from "../annotations"
+import { SqlTypes } from "../types"
 
-
-export default class Event extends SqlType{
-  id: string
-  activityId: IdOf<Activity>
-  start: Date
-  end: Date
-  location: IdOf<Location>
-  sessionIndex: number
-
-  static databaseName = "events"
+@Table('events')
+export default class Event extends SqlType {
+  @Column()
+  public id: string
+  @ManyToOne(Activity)
+  @Column('activity_id', SqlTypes.STRING)
+  public activity: IdOf<Activity> | Activity
+  @Column('start', SqlTypes.DATE)
+  public start: Date
+  @Column('end', SqlTypes.DATE)
+  public end: Date
+  @ManyToOne(Location)
+  @Column('location', SqlTypes.STRING)
+  public location: IdOf<Location> | Location
+  @Column()
+  public sessionIndex: number
 
   static getEmptyObject() {
     return new Event()
@@ -22,7 +30,7 @@ export default class Event extends SqlType{
   constructor() {
     super()
     this.id = "event-xxxx-0"
-    this.activityId = "acti-xxxx"
+    this.activity = "acti-xxxx"
     this.start = new Date()
     this.end = new Date()
     this.location = "Accueil"
@@ -43,7 +51,7 @@ export default class Event extends SqlType{
 
   equals(other: Event): boolean {
     return this.id === other.id &&
-      this.activityId === other.activityId &&
+      this.activity === other.activity &&
       this.start.getTime() === other.start.getTime() &&
       this.end.getTime() === other.end.getTime() &&
       this.location === other.location &&
@@ -52,7 +60,7 @@ export default class Event extends SqlType{
 
   public fromJson(json: any): Event {
     this.id = json.id
-    this.activityId = json.activityId
+    this.activity = json.activity
     this.start = new Date(json.start)
     this.end = new Date(json.end)
     this.location = json.location

@@ -10,3 +10,35 @@ export const hashString = (str: string) => {
     0
   )
 }
+
+export const enum Case {
+  CAMEL_CASE = 'camelCase',
+  SNAKE_CASE = 'snake_case'
+}
+
+interface ConvertCaseOption {
+  from: Case,
+  to: Case
+}
+
+export const convertCase = (str: string, option: ConvertCaseOption) => {
+  if (option.from === option.to) {
+    return str
+  }
+  if (option.to === Case.SNAKE_CASE) {
+    switch (option.from) {
+      case Case.CAMEL_CASE:
+        return str.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase()
+      default:
+        return str
+    }
+  }
+  if (option.to === Case.CAMEL_CASE) {
+    switch (option.from) {
+      case Case.SNAKE_CASE:
+        return str.replace(/([a-z0-9])_([a-z])/g, (g) => g[0] + g[2].toUpperCase())
+      default:
+        return str
+    }
+  }
+}

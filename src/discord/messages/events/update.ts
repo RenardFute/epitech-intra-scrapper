@@ -1,4 +1,4 @@
-import connector, { SqlUpdate } from "../../../sql/connector"
+import connector from "../../../sql/connector"
 import Module from "../../../sql/objects/module"
 import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from "discord.js"
 import { devChannel, updateChannel } from "../../index"
@@ -11,6 +11,7 @@ import utc from "dayjs/plugin/utc"
 import { createEventImage } from "./new"
 import { isDev } from "../../../index"
 import Event from "../../../sql/objects/event"
+import { SqlUpdate } from "../../../sql/types"
 dayjs.extend(timezone)
 dayjs.extend(utc)
 
@@ -53,9 +54,10 @@ const formatUpdate = (field: keyof Event, oldValue: any, newValue: any) => {
 export const sendEventUpdateMessage = async (update: SqlUpdate<any, Event>) => {
   assert(update)
   assert(update.isDiff)
-  const activity = await connector.getOne(Activity, { id: update.newObject.activityId})
+  const activity = update.newObject.activity instanceof Activity ? update.newObject.activity : await connector.getOne(Activity, { id: update.newObject.activity})
   if (activity === null) return
-  const module = await connector.getOne(Module, { id: activity.moduleId })
+  assert(typeof activity.module === 'number')
+  const module = await connector.getOne(Module, { id: activity.module })
   if (module === null) return
   const embed = new EmbedBuilder()
     .setTitle("Events update")

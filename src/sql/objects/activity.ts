@@ -1,30 +1,49 @@
-import { SqlBoolean, SqlType } from "../connector"
-import Module from "./module"
 import { IdOf } from "../../utils/types"
 import { ActivityMainType, ActivityType } from "../../intra/dto"
+import { Column, ManyToOne, Table } from "../annotations"
+import Location from "./location"
+import SqlType from "../sqlType"
+import { SqlTypes } from "../types"
+import Module from "./module"
 
-
+@Table('activities')
 export default class Activity extends SqlType {
-  id: string
-  moduleId: IdOf<Module>
-  name: string
-  isOngoing: SqlBoolean
-  start: Date
-  end: Date
-  location: string
-  description: string
-  isProject: SqlBoolean
-  isGraded: SqlBoolean
-  hasMeeting: SqlBoolean
-  url: string
-  deadline: Date | null
-  begin: Date
-  endRegister: Date | null
-  type: ActivityType
-  mainType: ActivityMainType
-
-
-  static databaseName = "activities"
+  @Column()
+  public id: string
+  @ManyToOne(Module)
+  @Column('module_id', SqlTypes.NUMBER)
+  public module: IdOf<Module> | Module
+  @Column()
+  public name: string
+  @Column()
+  public isOngoing: boolean
+  @Column('start', SqlTypes.DATE)
+  public start: Date
+  @Column('end', SqlTypes.DATE)
+  public end: Date
+  @ManyToOne(Location)
+  @Column('location', SqlTypes.STRING)
+  public location: IdOf<Location> | Location
+  @Column()
+  public description: string
+  @Column()
+  public isProject: boolean
+  @Column()
+  public isGraded: boolean
+  @Column()
+  public hasMeeting: boolean
+  @Column()
+  public url: string
+  @Column('deadline', SqlTypes.DATE, true)
+  public deadline: Date | null
+  @Column('begin', SqlTypes.DATE)
+  public begin: Date
+  @Column('end_register', SqlTypes.DATE, true)
+  public endRegister: Date | null
+  @Column()
+  public type: ActivityType
+  @Column()
+  public mainType: ActivityMainType
 
   static getEmptyObject() {
     return new Activity()
@@ -33,7 +52,7 @@ export default class Activity extends SqlType {
   constructor() {
     super()
     this.id = "acti-xxxx"
-    this.moduleId = 0
+    this.module = 0
     this.name = ""
     this.isOngoing = false
     this.start = new Date()
@@ -53,7 +72,7 @@ export default class Activity extends SqlType {
 
   equals(other: Activity): boolean {
     return this.id === other.id &&
-      this.moduleId === other.moduleId &&
+      this.module === other.module &&
       this.name === other.name &&
       this.isOngoing === other.isOngoing &&
       this.start.getTime() === other.start.getTime() &&
@@ -73,7 +92,7 @@ export default class Activity extends SqlType {
 
   public fromJson(json: any): Activity {
     this.id = json.id
-    this.moduleId = json.moduleId
+    this.module = json.module
     this.name = json.name
     this.isOngoing = json.isOngoing
     this.start = new Date(json.start)

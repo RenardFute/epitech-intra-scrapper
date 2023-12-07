@@ -1,19 +1,5 @@
-import { SqlType } from "./connector"
+import SqlType from "./sqlType"
 
-/**
- * A type to represent a boolean in the database (0 or 1 instead of true or false)
- * @category SQL
- * @since 1.0.0
- * @type {boolean | number}
- */
-export type SqlBoolean = boolean | number
-/**
- * A type to represent JSON in the database (stringified JSON instead of JSON)
- * @category SQL
- * @since 1.0.0
- * @type {unknown | string}
- */
-export type SqlJson<K extends Object> = K | string
 /**
  * A type to represent the result of an insertOrUpdate operation
  * @category SQL
@@ -25,3 +11,10 @@ export type SqlJson<K extends Object> = K | string
  * @author Axel ECKENBERG
  */
 export type SqlUpdate<T extends typeof SqlType, K extends InstanceType<T>> = { isDiff: boolean, oldObject: K, newObject: K } | void
+
+export enum SqlTypes {
+  NUMBER = 'number',
+  BOOLEAN = 'boolean',
+  DATE = 'date',
+  STRING = 'string'
+}

@@ -1,4 +1,3 @@
-import { SqlUpdate } from "../../../sql/connector"
 import Module from "../../../sql/objects/module"
 import { EmbedBuilder } from "discord.js"
 import { devChannel, updateChannel } from "../../index"
@@ -6,6 +5,7 @@ import assert from "assert"
 import { promoMapping } from "../../utils/mappings"
 import dayjs from "dayjs"
 import { isDev } from "../../../index"
+import { SqlUpdate } from "../../../sql/types"
 
 const formatUpdate = (field: keyof Module, oldValue: any, newValue: any) => {
   let emoji = ''

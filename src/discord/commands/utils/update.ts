@@ -125,16 +125,11 @@ export default {
           .setFields([
             {
               name: "Locations",
-              value: "``" + stats.locations.fetched + "`` fetched, ``" + stats.locations.inserted + "`` inserted, ``" + stats.locations.updated + "`` updated",
-              inline: true,
-            },
-            {
-              name: "Types",
-              value: "``" + stats.types.fetched + "`` fetched, ``" + stats.types.inserted + "`` inserted, ``" + stats.types.updated + "`` updated",
+              value: "``" + stats.fetched + "`` fetched, ``" + stats.inserted + "`` inserted, ``" + stats.updated + "`` updated",
               inline: true,
             }]
           )
-          .setFooter({text: "Done in " + stats.locations.time + "ms"})
+          .setFooter({text: "Done in " + stats.time + "ms"})
         break
       default:
         await interaction.editReply("Invalid type")

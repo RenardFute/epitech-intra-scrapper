@@ -12,8 +12,6 @@ import { isDev } from "./index"
 import { scrapEventsForActivity } from "./intra/events"
 import { scrapLocations } from "./intra/locations"
 import Location from "./sql/objects/location"
-import LocationType from "./sql/objects/locationType"
-import LocationWithTypes from "./sql/objects/locationWithTypes"
 import Event from "./sql/objects/event"
 
 const hourFrequency = 1000 * 60 * 60 // Each hour
@@ -57,7 +55,7 @@ export const modulesScrap = async (): Promise<ScrapStatistics> => {
       for (const flag of flagsToInsert) {
         if (flagsToInsert.length > 1 && flag.flag === ModuleFlags.NONE)
           continue
-        await connector.insert(ModuleFlag, flag)
+        await connector.insert(flag)
       }
     }
     stats.time = Date.now() - stats.time
@@ -82,7 +80,7 @@ export const modulesScrap = async (): Promise<ScrapStatistics> => {
  * @since 1.0.0
  */
 export const activitiesScrap = async (all?: boolean): Promise<ScrapStatistics> => {
-  const modulesSynced = await connector.getMany(Module, all ? undefined : {isOngoing: 1})
+  const modulesSynced = await connector.getMany(Module, all ? undefined : {isOngoing: true})
   const stats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
   for (const module of modulesSynced) {
     const activities = await scrapActivitiesForModule(module)
@@ -114,8 +112,8 @@ export const activitiesScrap = async (all?: boolean): Promise<ScrapStatistics> =
  * @since 1.0.0
  */
 export const projectScrap = async (all?: boolean): Promise<ScrapStatistics> => {
-  const modulesSynced = await connector.getMany(Module, all ? undefined : {isOngoing: 1})
-  const activitiesSynced = (await connector.getMany(Activity, {isProject: true})).filter((a) => modulesSynced.find((m) => m.id === a.moduleId))
+  const modulesSynced = await connector.getMany(Module, all ? undefined : {isOngoing: true})
+  const activitiesSynced = (await connector.getMany(Activity, {isProject: true})).filter((a) => modulesSynced.find((m) => m.id === a.module))
   const stats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
   for (const activity of activitiesSynced) {
     const project = await scrapProjectForActivity(activity)
@@ -149,8 +147,8 @@ export const projectScrap = async (all?: boolean): Promise<ScrapStatistics> => {
  * @author Axel ECKENBERG
  */
 export const eventsScrap = async (all?: boolean): Promise<ScrapStatistics> => {
-  const modulesSynced = await connector.getMany(Module, all ? undefined : {isOngoing: 1})
-  const activitiesSynced = (await connector.getMany(Activity)).filter((a) => modulesSynced.find((m) => m.id === a.moduleId))
+  const modulesSynced = await connector.getMany(Module, all ? undefined : {isOngoing: true})
+  const activitiesSynced = (await connector.getMany(Activity)).filter((a) => modulesSynced.find((m) => m.id === a.module))
   const stats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
   for (const activity of activitiesSynced) {
     let events = await scrapEventsForActivity(activity)
@@ -172,12 +170,11 @@ export const eventsScrap = async (all?: boolean): Promise<ScrapStatistics> => {
   return stats
 }
 
-export const locationsScrap = async (): Promise<{ locations: ScrapStatistics, types: ScrapStatistics }> => {
+export const locationsScrap = async (): Promise<ScrapStatistics> => {
   const locations = await scrapLocations()
   const stats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
-  const typeStats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
   for (const location of locations) {
-    const loc = await connector.insertOrUpdate(Location, location.location, {id: location.location.id})
+    const loc = await connector.insertOrUpdate(Location, location, {id: location.id})
     stats.fetched++
     if (loc) {
       if (loc.isDiff) {
@@ -186,30 +183,10 @@ export const locationsScrap = async (): Promise<{ locations: ScrapStatistics, ty
     } else {
       stats.inserted++
     }
-    typeStats.fetched += location.types.length
-    await connector.delete(LocationWithTypes, {locationId: location.location.id})
-    for (const type of location.types) {
-      const locType = await connector.insertOrUpdate(LocationType, type, {id: type.id})
-      if (locType) {
-        if (locType.isDiff) {
-          typeStats.updated++
-        }
-      } else {
-        typeStats.inserted++
-      }
-      const binding = new LocationWithTypes().fromJson({
-        locationId: location.location.id,
-        locationTypeId: type.id,
-      })
-
-      await connector.insert(LocationWithTypes, binding)
-    }
   }
   stats.time = Date.now() - stats.time
-  typeStats.time = Date.now() - typeStats.time
   console.log("Locations scrap done", new Date().toLocaleString(), stats)
-  console.log("Location types scrap done", new Date().toLocaleString(), typeStats)
-  return { locations: stats, types: typeStats }
+  return stats
 }
 
 /**

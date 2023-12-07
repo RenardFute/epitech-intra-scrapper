@@ -12,7 +12,7 @@ export const scrapEventsForActivity = async (activity: Activity): Promise<Event[
   for (const event of dto.events) {
     const index = parseInt(event.num_event) - 1
     const e = new Event().fromJson({
-      activityId: activity.id,
+      activity: activity.id,
       end: dayjs(event.end, "YYYY-MM-DD HH:mm:ss").toDate(),
       id: Event.computeId(activity.id, index),
       location: event.location,

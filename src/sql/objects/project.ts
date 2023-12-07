@@ -1,6 +1,6 @@
-import { SqlType } from "../connector"
 import { IdOf } from "../../utils/types"
 import Activity from "./activity"
+import SqlType from "../sqlType"
 
 export default class Project extends SqlType {
   activityId: IdOf<Activity>

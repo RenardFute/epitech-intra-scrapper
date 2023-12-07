@@ -17,9 +17,9 @@ dayjs.extend(timezone)
 dayjs.extend(utc)
 
 export const sendEventCreatedMessage = async (event: Event) => {
-  const activity = await connector.getOne(Activity, {id: event.activityId})
-  assert(activity)
-  const module = await connector.getOne(Module, {id: activity.moduleId})
+  const activity = event.activity instanceof Activity ? event.activity : await connector.getOne(Activity, {id: event.activity})
+  assert(activity && typeof activity.module === 'number')
+  const module = await connector.getOne(Module, {id: activity.module})
   assert(module)
 
   const registerButton: ButtonBuilder = new ButtonBuilder()
@@ -71,7 +71,7 @@ export const sendEventCreatedMessage = async (event: Event) => {
 export const createEventImage = async (event: Event, activity: Activity, module: Module) => {
   const activityNameSize = 100 + getTextWidthWithStyle(activity.name, 'bold 20px sans-serif')
   const moduleNameSize = 100 + getTextWidthWithStyle(module.name, 'bold 24px sans-serif')
-  const location = await connector.getOne(Location, {id: event.location})
+  const location = event.location instanceof Location ? event.location : await connector.getOne(Location, {id: event.location})
   assert(location)
   const image = await loadImage("assets/rooms/" + location.imagePath ?? 'NA.png')
   const imageRatio = image.height / image.width

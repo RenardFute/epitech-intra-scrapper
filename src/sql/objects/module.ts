@@ -1,26 +1,44 @@
-import { SqlBoolean, SqlType } from "../connector"
 import { Promo } from "./sourceUser"
+import SqlType from "../sqlType"
+import { Column, Table } from "../annotations"
+import { SqlTypes } from "../types"
 
+@Table('modules')
 export default class Module extends SqlType {
-  id: number
-  name: string
-  nameFull: string
-  code: string
-  semester: number
-  year: number
-  city: string
-  credits: number
-  isOngoing: SqlBoolean
-  start: Date
-  end: Date
-  isRegistrationOpen: SqlBoolean
-  endRegistration: Date | null
-  isRoadblock: SqlBoolean
-  isMandatory: SqlBoolean
-  promo: Promo
-  url: string
-
-  static databaseName = "modules"
+  @Column()
+  public id: number
+  @Column()
+  public name: string
+  @Column()
+  public nameFull: string
+  @Column()
+  public code: string
+  @Column()
+  public semester: number
+  @Column()
+  public year: number
+  @Column()
+  public city: string
+  @Column()
+  public credits: number
+  @Column()
+  public isOngoing: boolean
+  @Column('start', SqlTypes.DATE)
+  public start: Date
+  @Column('end', SqlTypes.DATE)
+  public end: Date
+  @Column()
+  public isRegistrationOpen: boolean
+  @Column('end_registration', SqlTypes.DATE, true)
+  public endRegistration: Date | null
+  @Column()
+  public isRoadblock: boolean
+  @Column()
+  public isMandatory: boolean
+  @Column()
+  public promo: Promo
+  @Column()
+  public url: string
 
   static getEmptyObject() {
     return new Module()

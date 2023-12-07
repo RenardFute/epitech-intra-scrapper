@@ -73,7 +73,7 @@ export const findFlags = (flags: number): ModuleFlags[] => {
 }
 
 export const scrapModulesForPromo = async (promo: Promo): Promise<{ module: Module, flags: number }[]> => {
-  const user = await connector.getOne(SourceUser, { promo: promo, disabled: 0 })
+  const user = await connector.getOne(SourceUser, { promo: promo, disabled: false })
   if (!user) {
     console.error("No user found for promo", promo)
     return []

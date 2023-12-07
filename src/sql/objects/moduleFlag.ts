@@ -1,7 +1,7 @@
 import { IdOf } from "../../utils/types"
 import Module from "./module"
 import { ModuleFlags } from "../../intra/dto"
-import { SqlType } from "../connector"
+import SqlType from "../sqlType"
 
 export default class ModuleFlag extends SqlType {
   moduleId: IdOf<Module>

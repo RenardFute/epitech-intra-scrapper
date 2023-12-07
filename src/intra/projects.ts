@@ -31,13 +31,13 @@ const parseProject = async (dto: detailedProjectDTO, activity: Activity, _module
 }
 
 export const scrapProjectForActivity = async (activity: Activity): Promise<Project | null> => {
-  const module = await connector.getOne(Module, { id: activity.moduleId })
+  const module = activity.module instanceof Module ? activity.module : await connector.getOne(Module, { id: activity.module })
   if (!module) {
     if (isDev)
       console.error("No module found for activity", activity.id)
     return null
   }
-  const user = await connector.getOne(SourceUser, { promo: module.promo, disabled: 0 })
+  const user = await connector.getOne(SourceUser, { promo: module.promo, disabled: false })
   if (!user) {
     if (isDev)
       console.error("No user found for module", module.id)

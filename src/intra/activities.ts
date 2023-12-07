@@ -31,7 +31,7 @@ const parseActivity = async (dto: activityDTO, module: Module): Promise<Activity
     isOngoing,
     isProject: dto.is_projet,
     location,
-    moduleId: module.id,
+    module: module.id,
     name,
     start,
     url,
@@ -44,7 +44,7 @@ const parseActivity = async (dto: activityDTO, module: Module): Promise<Activity
 }
 
 export const scrapActivitiesForModule = async (module: Module): Promise<Activity[]> => {
-  const user = await connector.getOne(SourceUser, { promo: module.promo, disabled: 0 })
+  const user = await connector.getOne(SourceUser, { promo: module.promo, disabled: false })
   if (!user) {
     if (isDev)
       console.error("No user found for module", module.id)
