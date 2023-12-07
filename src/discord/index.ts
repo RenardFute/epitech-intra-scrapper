@@ -179,7 +179,7 @@ client.on(Events.InteractionCreate, async interaction => {
       cookie,
       year: parseInt(year),
       promo,
-      discordUserId: userId,
+      id: userId,
       disabled: false
     })
 
@@ -198,7 +198,7 @@ client.on(Events.InteractionCreate, async interaction => {
       }
     }
 
-    const result = await connector.insertOrUpdate(SourceUser, sourceUser, { discordUserId: sourceUser.discordUserId })
+    const result = await connector.insertOrUpdate(SourceUser, sourceUser, { id: sourceUser.id })
     if (result) {
       if (result.isDiff) {
         await interaction.editReply({ content: "✅ Utilisateur mis à jour !"})

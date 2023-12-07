@@ -123,7 +123,7 @@ export const projectScrap = async (all?: boolean): Promise<ScrapStatistics> => {
       continue
     }
     stats.fetched += 1
-    const result = await connector.insertOrUpdate(Project, project, {activityId: project.activityId})
+    const result = await connector.insertOrUpdate(Project, project, {activity: project.activity})
     if (result) {
       if (result.isDiff) {
         stats.updated++

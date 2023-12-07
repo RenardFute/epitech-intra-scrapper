@@ -2,15 +2,18 @@ import { IdOf } from "../../utils/types"
 import Module from "./module"
 import { ModuleFlags } from "../../intra/dto"
 import SqlType from "../sqlType"
+import { Column, Table } from "../annotations"
+import { SqlTypes } from "../types"
 
+@Table('module_flags')
 export default class ModuleFlag extends SqlType {
-  moduleId: IdOf<Module>
-  flag: ModuleFlags
-
-  static databaseName = "module_flags"
+  @Column('module_id', SqlTypes.NUMBER)
+  public moduleId: IdOf<Module>
+  @Column()
+  public flag: ModuleFlags
 
   static getEmptyObject() {
-    return new Module()
+    return new ModuleFlag()
   }
 
   constructor() {

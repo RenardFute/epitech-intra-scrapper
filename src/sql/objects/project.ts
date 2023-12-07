@@ -1,19 +1,28 @@
 import { IdOf } from "../../utils/types"
 import Activity from "./activity"
 import SqlType from "../sqlType"
+import { Column, ManyToOne, Table } from "../annotations"
+import { SqlTypes } from "../types"
 
+@Table('projects')
 export default class Project extends SqlType {
-  activityId: IdOf<Activity>
-  name: string
-  begin: Date
-  end: Date
-  endRegister: Date | null
-  deadline: Date | null
-  maxGroupSize: number
-  minGroupSize: number
-
-
-  static databaseName = "projects"
+  @ManyToOne(Activity)
+  @Column('activity_id', SqlTypes.STRING)
+  public activity: IdOf<Activity> | Activity
+  @Column()
+  public name: string
+  @Column('begin', SqlTypes.DATE)
+  public begin: Date
+  @Column('end', SqlTypes.DATE)
+  public end: Date
+  @Column('end_register', SqlTypes.DATE, true)
+  public endRegister: Date | null
+  @Column('deadline', SqlTypes.DATE, true)
+  public deadline: Date | null
+  @Column()
+  public maxGroupSize: number
+  @Column()
+  public minGroupSize: number
 
   static getEmptyObject() {
     return new Project()
@@ -21,7 +30,7 @@ export default class Project extends SqlType {
 
   constructor() {
     super()
-    this.activityId = 'acti-xxxx'
+    this.activity = 'acti-xxxx'
     this.name = ""
     this.begin = new Date()
     this.end = new Date()
@@ -32,7 +41,7 @@ export default class Project extends SqlType {
   }
 
   equals(other: Project): boolean {
-    return this.activityId === other.activityId &&
+    return this.activity === other.activity &&
       this.name === other.name &&
       this.begin.getTime() === other.begin.getTime() &&
       this.end.getTime() === other.end.getTime() &&
@@ -43,7 +52,7 @@ export default class Project extends SqlType {
   }
 
   public fromJson(json: any): Project {
-    this.activityId = json.activityId
+    this.activity = json.activity
     this.name = json.name
     this.begin = json.begin
     this.end = json.end

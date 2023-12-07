@@ -8,6 +8,8 @@ import dayjs from "dayjs"
 import connector from "../../src/sql/connector"
 import assert from "node:assert"
 import { IdOf } from "../../src/utils/types"
+import { ModuleFlags } from "../../src/intra/dto"
+import ModuleFlag from "../../src/sql/objects/moduleFlag"
 
 @Table('test')
 class TestSQlType extends SqlType {
@@ -103,6 +105,15 @@ test('Map Relation ManyToMany', async () => {
   expect(location.types).toHaveLength(1)
   expect(location.types[0].type).toBe('salle-de-cours-td')
   expect(location.types[0].seats).toBe(65)
+})
+
+test('Map Relation OneToMany', async () => {
+  const id: IdOf<Module> = 42747
+  const module = await connector.getOne(Module, {id})
+
+  await module.map()
+  expect(module.flags).toHaveLength(3)
+  expect(module.flags).toContainEqual(new ModuleFlag().fromJson({moduleId: id, flag: ModuleFlags.ROADBLOCK}))
 })
 
 afterAll(() => {

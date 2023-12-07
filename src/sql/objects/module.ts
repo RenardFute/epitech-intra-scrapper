@@ -1,7 +1,9 @@
 import { Promo } from "./sourceUser"
 import SqlType from "../sqlType"
-import { Column, Table } from "../annotations"
+import { Column, OneToMany, Table } from "../annotations"
 import { SqlTypes } from "../types"
+import { ModuleFlags } from "../../intra/dto"
+import ModuleFlag from "./moduleFlag"
 
 @Table('modules')
 export default class Module extends SqlType {
@@ -39,6 +41,8 @@ export default class Module extends SqlType {
   public promo: Promo
   @Column()
   public url: string
+  @OneToMany(ModuleFlag, 'module_id')
+  public flags: ModuleFlag[]
 
   static getEmptyObject() {
     return new Module()
@@ -63,6 +67,7 @@ export default class Module extends SqlType {
     this.isRoadblock = false
     this.promo = Promo.TEK_1
     this.url = ""
+    this.flags = []
   }
 
   equals(other: Module): boolean {
@@ -103,6 +108,7 @@ export default class Module extends SqlType {
     this.isRoadblock = json.isRoadblock
     this.promo = json.promo
     this.url = json.url
+    this.flags = json.flags ?? []
     return this
   }
 }

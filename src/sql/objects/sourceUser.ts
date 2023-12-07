@@ -3,6 +3,7 @@ import Activity from "./activity"
 import Module from "./module"
 import SqlType from "../sqlType"
 import assert from "assert"
+import { Column, Table } from "../annotations"
 
 /**
  * Enum representing the different promos
@@ -32,6 +33,7 @@ export enum Promo {
  * @author Axel ECKENBERG
  * @see SqlType
  */
+@Table('source_users')
 export default class SourceUser extends SqlType {
   /**
    * The name of the user
@@ -44,7 +46,8 @@ export default class SourceUser extends SqlType {
    * @default ""
    * @author Axel ECKENBERG
    */
-  name: string
+  @Column()
+  public name: string
   /**
    * The connection cookie of the user
    * @type {string}
@@ -56,7 +59,8 @@ export default class SourceUser extends SqlType {
    * @default ""
    * @author Axel ECKENBERG
    */
-  cookie: string
+  @Column()
+  public cookie: string
   /**
    * The year the user arrived at Epitech in TEK 1
    * @type {number}
@@ -69,7 +73,8 @@ export default class SourceUser extends SqlType {
    * @default 0
    * @author Axel ECKENBERG
    */
-  year: number
+  @Column()
+  public year: number
   /**
    * The promo of the user
    * @type {Promo}
@@ -83,7 +88,8 @@ export default class SourceUser extends SqlType {
    * @see Promo.TEK_1
    * @author Axel ECKENBERG
    */
-  promo: Promo
+  @Column()
+  public promo: Promo
   /**
    * The discord user id of the user
    * @type {string}
@@ -96,7 +102,8 @@ export default class SourceUser extends SqlType {
    * @default ""
    * @author Axel ECKENBERG
    */
-  discordUserId: string
+  @Column()
+  public id: string
   /**
    * Whether the user is disabled or not (e.g. not logged in anymore)
    * @type {SqlBoolean}
@@ -109,17 +116,8 @@ export default class SourceUser extends SqlType {
    * @see SqlBoolean
    * @author Axel ECKENBERG
    */
-  disabled: boolean
-  /**
-   * The name of the database table
-   * @type {string}
-   * @since 1.0.0
-   * @category User
-   * @see SourceUser
-   * @fieldOf SourceUser
-   * @see SqlType.databaseName
-   */
-  static databaseName: string = "source_users"
+  @Column()
+  public disabled: boolean
 
   static getEmptyObject() {
     return new SourceUser()
@@ -131,16 +129,16 @@ export default class SourceUser extends SqlType {
     this.cookie = ""
     this.year = 0
     this.promo = Promo.TEK_1
-    this.discordUserId = ""
+    this.id = ""
     this.disabled = false
   }
 
   public toString(): string {
-    return this.isDiscordBound() ? '<@' + this.discordUserId + '>' : this.name
+    return this.isDiscordBound() ? '<@' + this.id + '>' : this.name
   }
 
   public isDiscordBound(): boolean {
-    return this.discordUserId.length > 1
+    return this.id.length > 1
   }
 
   public async isLogged(): Promise<boolean> {
@@ -165,7 +163,7 @@ export default class SourceUser extends SqlType {
       this.cookie === other.cookie &&
       this.year === other.year &&
       this.promo === other.promo &&
-      this.discordUserId === other.discordUserId
+      this.id === other.id
   }
 
   public fromJson(json: any): SourceUser {
@@ -173,7 +171,7 @@ export default class SourceUser extends SqlType {
     this.cookie = json.cookie
     this.year = json.year
     this.promo = json.promo
-    this.discordUserId = json.discordUserId
+    this.id = json.id
     this.disabled = json.disabled
     return this
   }
@@ -193,10 +191,10 @@ export const isUserStillLoggedIn = async (user: SourceUser): Promise<boolean> =>
   const isLoggedOut = 'message' in json && json.message === 'Veuillez vous connecter'
   if (isLoggedOut) {
     user.disabled = true
-    await connector.update(SourceUser, user, { discordUserId: user.discordUserId })
+    await connector.update(SourceUser, user, { id: user.id })
   } else {
     user.disabled = false
-    await connector.update(SourceUser, user, { discordUserId: user.discordUserId })
+    await connector.update(SourceUser, user, { id: user.id })
   }
   return !isLoggedOut
 }
@@ -210,7 +208,7 @@ export const getSyncedPromos = async (): Promise<Promo[]> => {
       promos.push(user.promo)
     } else {
       user.disabled = true
-      await connector.update(SourceUser, user, { discordUserId: user.discordUserId })
+      await connector.update(SourceUser, user, { id: user.id })
     }
   }
   return promos.filter((promo, index, self) => self.indexOf(promo) === index)

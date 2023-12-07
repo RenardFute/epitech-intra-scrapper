@@ -19,7 +19,7 @@ const parseProject = async (dto: detailedProjectDTO, activity: Activity, _module
 
 
   return new Project().fromJson({
-    activityId: activity.id,
+    activity: activity.id,
     name,
     begin,
     end,
