@@ -26,12 +26,12 @@ export enum SqlFilterOperator {
 export default class SqlFilter<T extends typeof SqlType> {
   public left: SqlFilter<T> | SqlFilterField<T>
   public operator: SqlFilterOperator
-  public right: SqlFilter<T> | SqlFilterField<T> | false
+  public right: SqlFilter<T> | SqlFilterField<T> | true
 
   public constructor(left: SqlFilter<T> | SqlFilterField<T>, operator?: SqlFilterOperator, right?: SqlFilter<T> | SqlFilterField<T>) {
     this.left = left
-    this.operator = operator ?? SqlFilterOperator.OR
-    this.right = right ?? false
+    this.operator = operator ?? SqlFilterOperator.AND
+    this.right = right ?? true
   }
 
   public toString(): string {
@@ -47,16 +47,17 @@ export default class SqlFilter<T extends typeof SqlType> {
     } else if (this.right instanceof SqlFilterField) {
       r += `${convertCase(this.right.field.toString(), {from: Case.CAMEL_CASE, to: Case.SNAKE_CASE})} = ${SqlType.toSQLValue(this.right.value, this.right.infos)}`
     } else {
-      r += `FALSE`
+      r += `TRUE`
     }
     return r
   }
 
   public static from<T extends typeof SqlType>(type: T, filter: EasySqlFilter<T>): SqlFilter<T> {
     const columnsMap = {} as Record<keyof T, ColumnInfos>
-    const instanceKeys = (Object.keys(type) as (keyof T)[]).filter((key) => Reflect.hasMetadata('column', type, key.toString()))
+    const empty = type.getEmptyObject()
+    const instanceKeys = (Object.keys(empty) as (keyof T)[]).filter((key) => Reflect.hasMetadata('column', empty, key.toString()))
     for (const key of instanceKeys) {
-      columnsMap[key] = Reflect.getMetadata('column', type, key.toString()) as ColumnInfos
+      columnsMap[key] = Reflect.getMetadata('column', empty, key.toString()) as ColumnInfos
     }
 
     const filters: SqlFilterField<T>[] = []
@@ -70,7 +71,7 @@ export default class SqlFilter<T extends typeof SqlType> {
     const filterPairs = []
     for (let i = 0; i < filters.length; i += 2) {
       const left = filters[i]
-      const right = filters[i + 1] ?? false
+      const right = filters[i + 1] ?? true
       const filter = new SqlFilter<T>(left, SqlFilterOperator.AND, right)
       filterPairs.push(filter)
     }

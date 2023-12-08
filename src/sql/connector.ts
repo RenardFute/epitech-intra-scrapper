@@ -281,9 +281,9 @@ export class SqlConnect {
    * @see getOne
    * @author Axel ECKENBERG
    */
-  public async update<T extends typeof SqlType, K extends InstanceType<T>>(type: T, object: K, filter?: SqlFilter<T>): Promise<boolean> {
-    const query = `UPDATE ${object.getTableName()} SET ${object.toSQLReady()} WHERE ?`
-    const old = await this.getOne(type, filter) as K
+  public async update<T extends typeof SqlType, K extends InstanceType<T>>(type: T, object: K, filter: SqlFilter<T>): Promise<boolean> {
+    const query = `UPDATE ${object.getTableName()} SET ${object.toSQLReady()} WHERE ${filter.toString()}`
+    const old = await this.getOne(type) as K
     if (!old) return false
 
     const result = await this.query(query, object, filter ?? {})

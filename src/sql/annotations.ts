@@ -13,15 +13,15 @@ export function Table(tableName: string) {
 export interface ColumnInfos {
   name: string,
   type: SqlTypes,
-  canBeNull: boolean
+  canBeNull?: boolean
 }
 
 export function Column(name?: string, type?: SqlTypes, canBeNull?: boolean) {
   return function (target: any, propertyKey: string) {
-    const columnName = name || convertCase(propertyKey, {from: Case.CAMEL_CASE, to: Case.SNAKE_CASE})
-    const columnType: SqlTypes = type || Reflect.getMetadata('design:type', target, propertyKey).name.toLowerCase()
-    const columnCanBeNull: boolean = canBeNull ?? false
-    Reflect.defineMetadata('column', { name: columnName, type: columnType, canBeNull: columnCanBeNull }, target, propertyKey)
+    const columnName = name ?? convertCase(propertyKey, {from: Case.CAMEL_CASE, to: Case.SNAKE_CASE})
+    const columnType: SqlTypes = type ?? Reflect.getMetadata('design:type', target, propertyKey).name.toLowerCase()
+    const infos: ColumnInfos = {name: columnName, type: columnType, canBeNull: canBeNull}
+    Reflect.defineMetadata('column', infos, target, propertyKey)
   }
 }
 

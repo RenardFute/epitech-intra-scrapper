@@ -69,7 +69,7 @@ export default abstract class SqlType {
   public static toSQLValue(value: any, infos: ColumnInfos): string {
     const type = infos.type
 
-    if (infos.canBeNull && !value) {
+    if (value === null || value === undefined) {
       return 'NULL'
     }
     if (type === SqlTypes.NUMBER) {
@@ -77,7 +77,9 @@ export default abstract class SqlType {
       return value.toString()
     }
     if (type === SqlTypes.BOOLEAN) {
-      assert(typeof value === 'boolean')
+      assert(typeof value === 'boolean' || typeof value === "number")
+      if (typeof value === 'number')
+        return value > 0 ? 'TRUE' : 'FALSE'
       return value ? 'TRUE' : 'FALSE'
     }
     if (type === SqlTypes.STRING) {
@@ -85,7 +87,7 @@ export default abstract class SqlType {
     }
     if (type === SqlTypes.DATE) {
       assert(value instanceof Date)
-      return `'${value.toISOString()}'`
+      return `'${value.toISOString().slice(0, 19).replace('T', ' ')}'`
     }
     return ""
   }

@@ -30,8 +30,8 @@ export default class Activity extends SqlType {
   public isProject: boolean
   @Column()
   public isGraded: boolean
-  @Column()
-  public hasMeeting: boolean
+  @Column('has_meeting')
+  private _hasMeeting: boolean
   @Column()
   public url: string
   @Column('deadline', SqlTypes.DATE, true)
@@ -61,7 +61,7 @@ export default class Activity extends SqlType {
     this.description = ""
     this.isProject = false
     this.isGraded = false
-    this.hasMeeting = false
+    this._hasMeeting = false
     this.url = ""
     this.deadline = null
     this.begin = new Date()
@@ -109,5 +109,13 @@ export default class Activity extends SqlType {
     this.type = json.type
     this.mainType = json.mainType
     return this
+  }
+
+  public set hasMeeting(value: boolean) {
+    console.log(value)
+    this._hasMeeting = value
+  }
+  public get hasMeeting(): boolean {
+    return this._hasMeeting
   }
 }

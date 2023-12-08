@@ -21,7 +21,7 @@ interface ConvertCaseOption {
   to: Case
 }
 
-export const convertCase = (str: string, option: ConvertCaseOption) => {
+export const convertCase = (str: string, option: ConvertCaseOption): string => {
   if (option.from === option.to) {
     return str
   }
@@ -41,4 +41,5 @@ export const convertCase = (str: string, option: ConvertCaseOption) => {
         return str
     }
   }
+  return str
 }
