@@ -43,3 +43,14 @@ export const convertCase = (str: string, option: ConvertCaseOption): string => {
   }
   return str
 }
+
+export const escapeSQL = (str: string): string => {
+  let result = str
+  // Escape all backslashes
+  result = result.replace(/\\/g, "\\\\")
+
+  // Escape all apostrophes
+  result = result.replace(/'/g, "\\'")
+
+  return result
+}

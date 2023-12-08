@@ -1,10 +1,11 @@
 import SqlType from "../sqlType"
-import { Column, ManyToMany, Table } from "../annotations"
+import { Column, Id, ManyToMany, Table } from "../annotations"
 import { SqlTypes } from "../types"
 import LocationType from "./locationType"
 
 @Table('locations')
-export default class Location extends SqlType{
+export default class Location extends SqlType {
+  @Id()
   @Column()
   public id: string
   @Column()

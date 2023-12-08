@@ -4,6 +4,7 @@ import assert from "assert"
 import dayjs from "dayjs"
 import connector from "./connector"
 import SqlFilter, { EasySqlFilter } from "./sqlFilter"
+import { escapeSQL } from "../utils/strings"
 
 /**
  * A class to represent a type in the database
@@ -73,7 +74,7 @@ export default abstract class SqlType {
       return 'NULL'
     }
     if (value instanceof SqlType) {
-      value = value['id']
+      value = value[SqlType.getIdKey(value.constructor as typeof SqlType) as keyof SqlType]
     }
     if (type === SqlTypes.NUMBER) {
       assert(typeof value === 'number')
@@ -86,7 +87,7 @@ export default abstract class SqlType {
       return value ? 'TRUE' : 'FALSE'
     }
     if (type === SqlTypes.STRING) {
-      return `'${value}'`
+      return `'${escapeSQL(value)}'`
     }
     if (type === SqlTypes.DATE) {
       assert(value instanceof Date)
@@ -148,15 +149,14 @@ export default abstract class SqlType {
           value = await executeManyToMany(this, relation)
           break
         case RelationType.MANY_TO_ONE:
-          filter.id = this[key]
+          filter[SqlType.getIdKey(relation.targetEntity) as keyof SqlType] = this[key]
           value = await connector.getOne(relation.targetEntity, SqlFilter.from(relation.targetEntity, filter))
           break
         case RelationType.ONE_TO_MANY:
-          tmp = SqlType.getKeyFromColumnName(relation.targetEntity, relation.inverseProperty)
+          tmp = SqlType.getKeyFromColumnName(relation.targetEntity, relation.inverseProperty) as keyof SqlType
           if (!tmp)
             break
-          // @ts-ignore
-          filter[tmp] = this.id
+          filter[tmp] = this[SqlType.getIdKey(this.constructor as typeof SqlType) as keyof SqlType]
           value = await connector.getMany(relation.targetEntity, SqlFilter.from(relation.targetEntity, filter))
           break
         case RelationType.ONE_TO_ONE:
@@ -189,55 +189,83 @@ export default abstract class SqlType {
     await Promise.all(promises)
   }
 
+  public static getIdKey<T extends typeof SqlType, K extends InstanceType<T>>(type: T): keyof K {
+    const empty = type.getEmptyObject() as K
+    const instanceKeys = Object.keys(empty) as (keyof K)[]
+    const idDecoratedKeys = instanceKeys.filter(key => Reflect.hasMetadata('id', empty, key.toString()))
+    return idDecoratedKeys[0]
+  }
+
   public async save(): Promise<boolean> {
     const instanceKeys = Object.keys(this) as (keyof this)[]
     const relationKeys = instanceKeys.filter(key => Reflect.hasMetadata('relation', this, key.toString()))
-    const old: SqlType | null = await connector.getOne(this.constructor.prototype, SqlFilter.from(this.constructor.prototype, {id: this.id}))
+    const type: typeof SqlType = this.constructor as typeof SqlType
+    const idKey = SqlType.getIdKey(type)
+    const filter: EasySqlFilter<any> = {}
+    filter[idKey] = this[idKey]
+    const old: SqlType | null = await connector.getOne(type, SqlFilter.from(type, filter))
     const isNew = old === null
     if (old === null) {
       await connector.insert(this)
     } else {
-      await connector.update(this.constructor.prototype, this, SqlFilter.from(this.constructor.prototype, {id: this.id}))
+      await connector.update(type, this, SqlFilter.from(type, filter))
       await old.map()
     }
     for (const relKey of relationKeys) {
       const relation: Relation<any> = Reflect.getMetadata('relation', this, relKey.toString())
       const v: unknown | SqlType | SqlType[] = this[relKey]
       if (v instanceof SqlType && !Array.isArray(v)) { // Single SqlType
-        const oldRel: SqlType | null = await connector.getOne(relation.targetEntity, SqlFilter.from(relation.targetEntity, {id: v.id}))
+        const _idKey = SqlType.getIdKey(relation.targetEntity) as keyof typeof v
+        const _filter: EasySqlFilter<any> = {}
+        _filter[_idKey] = v[_idKey]
+        const oldRel: SqlType | null = await connector.getOne(relation.targetEntity, SqlFilter.from(relation.targetEntity, _filter))
         if (oldRel === null) {
           await connector.insert(v)
         } else {
-          await connector.update(relation.targetEntity, v, SqlFilter.from(relation.targetEntity, {id: v.id}))
+          await connector.update(relation.targetEntity, v, SqlFilter.from(relation.targetEntity, _filter))
         }
-      } else if (v instanceof SqlType && Array.isArray(v)) { // Multiple SqlTypes
+      } else if (Array.isArray(v)) { // Multiple SqlTypes
+        const _idKey = SqlType.getIdKey(relation.targetEntity) as keyof SqlType
+        for (const rel of v) {
+          const _filter: EasySqlFilter<any> = {}
+          _filter[_idKey] = rel[_idKey]
+          const oldRel: SqlType | null = await connector.getOne(relation.targetEntity, SqlFilter.from(relation.targetEntity, _filter))
+          if (oldRel === null) {
+            await connector.insert(rel)
+          } else {
+            await connector.update(relation.targetEntity, rel, SqlFilter.from(relation.targetEntity, _filter))
+          }
+        }
         if (relation.relationType === RelationType.ONE_TO_MANY) {
           const relationFilter: EasySqlFilter<any> = {}
           // @ts-ignore
-          relationFilter[SqlType.getKeyFromColumnName(relation.targetEntity, relation.inverseProperty)] = this.id
+          relationFilter[SqlType.getKeyFromColumnName(relation.targetEntity, relation.inverseProperty)] = this[idKey]
           const oldRels = await connector.getMany(relation.targetEntity, SqlFilter.from(relation.targetEntity, relationFilter))
-          const oldRelsIds = oldRels.map(rel => rel.id)
-          const newRelsIds = v.map(rel => rel.id)
+          const oldRelsIds = oldRels.map(rel => rel[_idKey])
+          const newRelsIds = v.map(rel => rel[_idKey])
           const relsToDelete = oldRelsIds.filter(id => !newRelsIds.includes(id))
-          const relsToInsert = v.filter(rel => !oldRelsIds.includes(rel.id))
-          const relsToUpdate = v.filter(rel => oldRelsIds.includes(rel.id))
+          const relsToInsert = v.filter(rel => !oldRelsIds.includes(rel[_idKey]))
+          const relsToUpdate = v.filter(rel => oldRelsIds.includes(rel[_idKey]))
           await Promise.all([
-            ...relsToDelete.map(relId => connector.delete(relation.targetEntity, SqlFilter.from(relation.targetEntity, { id: relId }))),
+            ...relsToDelete.map(relId => {
+              const relFilter: EasySqlFilter<any> = {}
+              relFilter[_idKey] = relId
+              connector.delete(relation.targetEntity, SqlFilter.from(relation.targetEntity, relFilter))
+            }),
             ...relsToInsert.map(rel => connector.insert(rel)),
             ...relsToUpdate.map(rel => rel.save())
           ])
         } else if (relation.relationType === RelationType.MANY_TO_MANY) {
-          const sourceIdInfo = Reflect.getMetadata('column', relation.targetEntity.getEmptyObject(), 'id')
-          const thisIdInfo = Reflect.getMetadata('column', this, 'id')
+          const sourceIdInfo = Reflect.getMetadata('column', relation.targetEntity.getEmptyObject(), _idKey)
+          const thisIdInfo = Reflect.getMetadata('column', this, idKey)
           const oldRels = await executeManyToMany(this, relation)
-          const oldRelsIds = oldRels.map(rel => rel.id)
-          const newRelsIds = v.map(rel => rel.id)
+          const oldRelsIds = oldRels.map(rel => rel[_idKey])
+          const newRelsIds = v.map(rel => rel[_idKey])
           const relsToDelete = oldRelsIds.filter(id => !newRelsIds.includes(id))
-          const relsToLink = v.filter(rel => !oldRelsIds.includes(rel.id) && ol
-          const relsToCreate
+          const relsToLink = v.filter(rel => !oldRelsIds.includes(rel[_idKey]))
           await Promise.all([
             ...relsToDelete.map(relId => connector.query(`DELETE FROM ${relation.joinTableName} WHERE ${relation.targetEntity.getTableName() + '_id'} = ${SqlType.toSQLValue(relId, sourceIdInfo)}`)),
-            ...relsToLink.map(rel => connector.query(`INSERT INTO ${relation.joinTableName} SET ${relation.targetEntity.getTableName() + '_id'} = ${SqlType.toSQLValue(rel.id, sourceIdInfo)}, ${this.getTableName() + '_id'} = ${SqlType.toSQLValue(this.id, thisIdInfo)}`))
+            ...relsToLink.map(rel => connector.query(`INSERT INTO ${relation.joinTableName} SET ${relation.targetEntity.getTableName() + '_id'} = ${SqlType.toSQLValue(rel[_idKey], sourceIdInfo)}, ${this.getTableName() + '_id'} = ${SqlType.toSQLValue(this[idKey], thisIdInfo)}`))
           ])
         }
       }

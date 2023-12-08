@@ -1,6 +1,6 @@
 import { IdOf } from "../../utils/types"
 import { ActivityMainType, ActivityType } from "../../intra/dto"
-import { Column, ManyToOne, Table } from "../annotations"
+import { Column, Id, ManyToOne, Table } from "../annotations"
 import Location from "./location"
 import SqlType from "../sqlType"
 import { SqlTypes } from "../types"
@@ -8,6 +8,7 @@ import Module from "./module"
 
 @Table('activities')
 export default class Activity extends SqlType {
+  @Id()
   @Column()
   public id: string
   @ManyToOne(Module)

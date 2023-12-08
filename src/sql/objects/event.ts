@@ -3,11 +3,12 @@ import Activity from "./activity"
 import dayjs from "dayjs"
 import Location from "./location"
 import SqlType from "../sqlType"
-import { Column, ManyToOne, Table } from "../annotations"
+import { Column, Id, ManyToOne, Table } from "../annotations"
 import { SqlTypes } from "../types"
 
 @Table('events')
 export default class Event extends SqlType {
+  @Id()
   @Column()
   public id: string
   @ManyToOne(Activity)

@@ -247,7 +247,7 @@ export class SqlConnect {
   public async insert<T extends typeof SqlType, K extends InstanceType<T>>(object: K): Promise<void> {
     const query = `INSERT INTO ${object.getTableName()} SET ${object.toSQLReady()}`
 
-    await this.query(query, object)
+    await this.query(query)
   }
 
   /**
@@ -286,7 +286,7 @@ export class SqlConnect {
     const old = await this.getOne(type) as K
     if (!old) return false
 
-    const result = await this.query(query, object, filter ?? {})
+    const result = await this.query(query)
     return result.changedRows > 0
   }
 

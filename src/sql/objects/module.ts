@@ -1,12 +1,12 @@
 import { Promo } from "./sourceUser"
 import SqlType from "../sqlType"
-import { Column, OneToMany, Table } from "../annotations"
+import { Column, Id, OneToMany, Table } from "../annotations"
 import { SqlTypes } from "../types"
-import { ModuleFlags } from "../../intra/dto"
 import ModuleFlag from "./moduleFlag"
 
 @Table('modules')
 export default class Module extends SqlType {
+  @Id()
   @Column()
   public id: number
   @Column()

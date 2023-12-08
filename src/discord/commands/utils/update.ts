@@ -10,16 +10,19 @@ export default {
     .setDescription('Fetch updates from the intranet')
     .addStringOption(option => option.setName('type').setDescription('Type of objects to fetch').setRequired(false))
     .addBooleanOption(option => option.setName('all').setDescription('Fetch all data (even inactive)').setRequired(false))
+    .addBooleanOption(option => option.setName('locations').setDescription('Includes locations').setRequired(false))
     .setDefaultMemberPermissions(0x0000000000000080),
   async execute(_client, interaction) {
     const type = interaction.options.getString('type')
     const all = interaction.options.getBoolean('all') || false
+    const locations = interaction.options.getBoolean('locations') || false
     interaction.deferReply()
     if (!type) {
+      const locationsStats = locations ? await locationsScrap() : {fetched: 0, inserted: 0, updated: 0, time: 0}
       const moduleStats = await modulesScrap()
       const activitiesStats = await activitiesScrap(all)
-      const eventsStats = await eventsScrap(all)
       const projectStats = await projectScrap(all)
+      const eventsStats = await eventsScrap(all)
 
       const embed = new EmbedBuilder()
         .setTitle("Update Results")
@@ -45,9 +48,14 @@ export default {
             name: "Projects",
             value: "``" + projectStats.fetched + "`` fetched, ``" + projectStats.inserted + "`` inserted, ``" + projectStats.updated + "`` updated",
             inline: true,
+          },
+          {
+            name: "Locations",
+            value: "``" + locationsStats.fetched + "`` fetched, ``" + locationsStats.inserted + "`` inserted, ``" + locationsStats.updated + "`` updated",
+            inline: true,
           }]
         )
-        .setFooter({text: "Done in " + (moduleStats.time + activitiesStats.time + eventsStats.time + projectStats.time) + "ms"})
+        .setFooter({text: "Done in " + (moduleStats.time + activitiesStats.time + eventsStats.time + projectStats.time + locationsStats.time) + "ms"})
       await interaction.editReply({embeds: [embed]})
       return
     }

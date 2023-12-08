@@ -1,11 +1,12 @@
 import { IdOf } from "../../utils/types"
 import Activity from "./activity"
 import SqlType from "../sqlType"
-import { Column, ManyToOne, Table } from "../annotations"
+import { Column, Id, ManyToOne, Table } from "../annotations"
 import { SqlTypes } from "../types"
 
 @Table('projects')
 export default class Project extends SqlType {
+  @Id()
   @ManyToOne(Activity)
   @Column('activity_id', SqlTypes.STRING)
   public activity: IdOf<Activity> | Activity

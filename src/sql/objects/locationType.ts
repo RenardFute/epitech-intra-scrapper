@@ -1,10 +1,11 @@
 import { IdOf } from "../../utils/types"
 import { hashString } from "../../utils/strings"
 import SqlType from "../sqlType"
-import { Column, Table } from "../annotations"
+import { Column, Id, Table } from "../annotations"
 
 @Table('locations_types')
 export default class LocationType extends SqlType {
+  @Id()
   @Column()
   public id: number
   @Column()

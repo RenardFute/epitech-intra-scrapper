@@ -3,7 +3,7 @@ import Activity from "./activity"
 import Module from "./module"
 import SqlType from "../sqlType"
 import assert from "assert"
-import { Column, Table } from "../annotations"
+import { Column, Id, Table } from "../annotations"
 import SqlFilter from "../sqlFilter"
 
 /**
@@ -103,6 +103,7 @@ export default class SourceUser extends SqlType {
    * @default ""
    * @author Axel ECKENBERG
    */
+  @Id()
   @Column()
   public id: string
   /**

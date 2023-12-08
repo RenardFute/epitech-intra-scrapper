@@ -46,20 +46,12 @@ const parseModule = async (dto: moduleDTO, source: SourceUser): Promise<Module |
     name,
     semester,
     url,
-    flags: flags
+    flags: flags.map((flag) => new ModuleFlag().fromJson({
+      id: ModuleFlag.computeId(id, flag),
+      moduleId: id,
+      flag
+    })).filter((value, _index, array) => value.flag !== ModuleFlags.NONE && array.length > 1)
   })
-}
-
-export const createFlags = (flags: ModuleFlags[], module: Module): ModuleFlag[] => {
-  const result: ModuleFlag[] = []
-  for (const flag of flags) {
-    const moduleFlag = new ModuleFlag().fromJson({
-      moduleId: module.id,
-      flag: flag
-    })
-    result.push(moduleFlag)
-  }
-  return result
 }
 
 export const findFlags = (flags: number): ModuleFlags[] => {
