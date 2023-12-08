@@ -3,6 +3,7 @@ import { Case, convertCase } from "../utils/strings"
 import { SqlTypes } from "./types"
 import SqlType from "./sqlType"
 import connector from "./connector"
+import SqlFilter from "./sqlFilter"
 
 export function Table(tableName: string) {
   return function (constructor: Function) {
@@ -78,7 +79,7 @@ export async function executeManyToMany<Target extends typeof SqlType, Source ex
     const targetEntity = relation.targetEntity
     const targetId = row[`${targetEntity.getTableName() + '_id'}`]
     // @ts-ignore
-    const target = await connector.getOne(targetEntity, {id: targetId})
+    const target = await connector.getOne(targetEntity, SqlFilter.from(targetEntity, {id: targetId}))
     result.push(target)
   }
   return result

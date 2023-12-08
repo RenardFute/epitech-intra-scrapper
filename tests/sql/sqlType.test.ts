@@ -10,6 +10,7 @@ import assert from "node:assert"
 import { IdOf } from "../../src/utils/types"
 import { ModuleFlags } from "../../src/intra/dto"
 import ModuleFlag from "../../src/sql/objects/moduleFlag"
+import SqlFilter from "../../src/sql/sqlFilter"
 
 @Table('test')
 class TestSQlType extends SqlType {
@@ -59,12 +60,12 @@ test('Get Table name from SqlType', async () => {
 test('Format SqlType to SQL Format', async () => {
   const test = new TestSQlType()
   const sqlFormat = test.toSQLReady()
-  expect(sqlFormat).toBe(`id = 'ID', n = 32, b = FALSE, date = '${dayjs('2003-07-20').toDate().toISOString()}', is_null = NULL, name_changed = 'tests'`)
+  expect(sqlFormat).toBe(`id = 'ID', n = 32, b = FALSE, date = '${dayjs('2003-07-20').toDate().toISOString().slice(0, 19).replace('T', ' ')}', is_null = NULL, name_changed = 'tests'`)
 })
 
 test('From SQL to Activity', async () => {
   const id: IdOf<Activity> = 'acti-555210'
-  const activity = await connector.getOne(Activity, {id})
+  const activity = await connector.getOne(Activity, SqlFilter.from(Activity, {id}))
 
   expect(activity).toBeInstanceOf(Activity)
   expect(activity.id).toBe(id)
@@ -88,7 +89,7 @@ test('From SQL to Activity', async () => {
 
 test('Map Relation ManyToOne', async () => {
   const id: IdOf<Activity> = 'acti-555210'
-  const activity = await connector.getOne(Activity, {id})
+  const activity = await connector.getOne(Activity, SqlFilter.from(Activity,{id}))
 
   await activity.map()
   expect(activity.module).toBeInstanceOf(Module)
@@ -99,7 +100,7 @@ test('Map Relation ManyToOne', async () => {
 
 test('Map Relation ManyToMany', async () => {
   const id: IdOf<Location> = 'FR/NAN/Alger-Epitech/Mordor'
-  const location = await connector.getOne(Location, {id})
+  const location = await connector.getOne(Location, SqlFilter.from(Location,{id}))
 
   await location.map()
   expect(location.types).toHaveLength(1)
@@ -109,7 +110,7 @@ test('Map Relation ManyToMany', async () => {
 
 test('Map Relation OneToMany', async () => {
   const id: IdOf<Module> = 42747
-  const module = await connector.getOne(Module, {id})
+  const module = await connector.getOne(Module, SqlFilter.from(Module,{id}))
 
   await module.map()
   expect(module.flags).toHaveLength(3)

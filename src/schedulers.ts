@@ -1,17 +1,14 @@
 import { getSyncedPromos } from "./sql/objects/sourceUser"
-import { createFlags, findFlags, scrapModulesForPromo } from "./intra/modules"
+import { scrapModulesForPromo } from "./intra/modules"
 import connector from "./sql/connector"
 import Module from "./sql/objects/module"
 import { scrapActivitiesForModule } from "./intra/activities"
 import Activity from "./sql/objects/activity"
 import { scrapProjectForActivity } from "./intra/projects"
 import Project from "./sql/objects/project"
-import ModuleFlag from "./sql/objects/moduleFlag"
-import { ModuleFlags } from "./intra/dto"
 import { isDev } from "./index"
 import { scrapEventsForActivity } from "./intra/events"
 import { scrapLocations } from "./intra/locations"
-import Location from "./sql/objects/location"
 import Event from "./sql/objects/event"
 import SqlFilter from "./sql/sqlFilter"
 
@@ -42,21 +39,12 @@ export const modulesScrap = async (): Promise<ScrapStatistics> => {
     const stats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
     const modules = await scrapModulesForPromo(promo)
     stats.fetched = modules.length
-    for (const r of modules) {
-      const result = await connector.insertOrUpdate(Module, r.module, SqlFilter.from(Module,{id: r.module.id}))
-      if (result) {
-        if (result.isDiff) {
-          stats.updated++
-        }
-      } else {
+    for (const module of modules) {
+      const isNew = await module.save()
+      if (isNew) {
         stats.inserted++
-      }
-      await connector.delete(ModuleFlag, SqlFilter.from(ModuleFlag,{ moduleId: r.module.id }))
-      const flagsToInsert = createFlags(findFlags(r.flags), r.module)
-      for (const flag of flagsToInsert) {
-        if (flagsToInsert.length > 1 && flag.flag === ModuleFlags.NONE)
-          continue
-        await connector.insert(flag)
+      } else {
+        stats.updated++
       }
     }
     stats.time = Date.now() - stats.time
@@ -175,14 +163,12 @@ export const locationsScrap = async (): Promise<ScrapStatistics> => {
   const locations = await scrapLocations()
   const stats: ScrapStatistics = { fetched: 0, inserted: 0, updated: 0, deleted: 0, time: Date.now() }
   for (const location of locations) {
-    const loc = await connector.insertOrUpdate(Location, location, SqlFilter.from(Location,{id: location.id}))
+    const isNew = await location.save()
     stats.fetched++
-    if (loc) {
-      if (loc.isDiff) {
-        stats.updated++
-      }
-    } else {
+    if (isNew) {
       stats.inserted++
+    } else {
+      stats.updated++
     }
   }
   stats.time = Date.now() - stats.time

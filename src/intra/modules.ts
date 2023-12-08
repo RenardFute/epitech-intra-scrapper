@@ -45,7 +45,8 @@ const parseModule = async (dto: moduleDTO, source: SourceUser): Promise<Module |
     nameFull,
     name,
     semester,
-    url
+    url,
+    flags: flags
   })
 }
 
@@ -73,18 +74,18 @@ export const findFlags = (flags: number): ModuleFlags[] => {
   return result
 }
 
-export const scrapModulesForPromo = async (promo: Promo): Promise<{ module: Module, flags: number }[]> => {
+export const scrapModulesForPromo = async (promo: Promo): Promise<Module[]> => {
   const user = await connector.getOne(SourceUser, SqlFilter.from(SourceUser,{ promo: promo, disabled: false }))
   if (!user) {
     console.error("No user found for promo", promo)
     return []
   }
   const dto = await fetchModulesForUser(user)
-  const modules: { module: Module, flags: number }[] = []
+  const modules: Module[] = []
   for (const m of dto) {
     const module = await parseModule(m, user)
     if (module)
-      modules.push({module, flags: parseInt(m.flags)})
+      modules.push(module)
   }
   return modules
 }

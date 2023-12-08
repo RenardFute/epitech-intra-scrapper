@@ -26,9 +26,9 @@ export enum SqlFilterOperator {
 export default class SqlFilter<T extends typeof SqlType> {
   public left: SqlFilter<T> | SqlFilterField<T>
   public operator: SqlFilterOperator
-  public right: SqlFilter<T> | SqlFilterField<T> | true
+  public right: SqlFilter<T> | SqlFilterField<T> | boolean
 
-  public constructor(left: SqlFilter<T> | SqlFilterField<T>, operator?: SqlFilterOperator, right?: SqlFilter<T> | SqlFilterField<T>) {
+  public constructor(left: SqlFilter<T> | SqlFilterField<T>, operator?: SqlFilterOperator, right?: SqlFilter<T> | SqlFilterField<T> | boolean) {
     this.left = left
     this.operator = operator ?? SqlFilterOperator.AND
     this.right = right ?? true
@@ -47,7 +47,7 @@ export default class SqlFilter<T extends typeof SqlType> {
     } else if (this.right instanceof SqlFilterField) {
       r += `${convertCase(this.right.infos.name.toString(), {from: Case.CAMEL_CASE, to: Case.SNAKE_CASE})} = ${SqlType.toSQLValue(this.right.value, this.right.infos)}`
     } else {
-      r += `TRUE`
+      r += this.right ? `TRUE` : `FALSE`
     }
     return r
   }
