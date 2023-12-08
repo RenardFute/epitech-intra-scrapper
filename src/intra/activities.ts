@@ -26,7 +26,7 @@ const parseActivity = async (dto: activityDTO, module: Module): Promise<Activity
   return new Activity().fromJson({
     description,
     end,
-    hasMeeting: dto.nb_planified && dto.nb_planified > 0,
+    hasMeeting: dto.nb_planified !== null && dto.nb_planified > 0,
     id: dto.codeacti,
     isGraded: dto.is_note,
     isOngoing,

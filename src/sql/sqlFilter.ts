@@ -39,13 +39,13 @@ export default class SqlFilter<T extends typeof SqlType> {
     if (this.left instanceof SqlFilter) {
       r += `(${this.left.toString()})`
     } else {
-      r += `${convertCase(this.left.field.toString(), {from: Case.CAMEL_CASE, to: Case.SNAKE_CASE})} = ${SqlType.toSQLValue(this.left.value, this.left.infos)}`
+      r += `${convertCase(this.left.infos.name.toString(), {from: Case.CAMEL_CASE, to: Case.SNAKE_CASE})} = ${SqlType.toSQLValue(this.left.value, this.left.infos)}`
     }
     r += ` ${this.operator.toString()} `
     if (this.right instanceof SqlFilter) {
       r += `(${this.right.toString()})`
     } else if (this.right instanceof SqlFilterField) {
-      r += `${convertCase(this.right.field.toString(), {from: Case.CAMEL_CASE, to: Case.SNAKE_CASE})} = ${SqlType.toSQLValue(this.right.value, this.right.infos)}`
+      r += `${convertCase(this.right.infos.name.toString(), {from: Case.CAMEL_CASE, to: Case.SNAKE_CASE})} = ${SqlType.toSQLValue(this.right.value, this.right.infos)}`
     } else {
       r += `TRUE`
     }

@@ -120,7 +120,7 @@ export const projectScrap = async (all?: boolean): Promise<ScrapStatistics> => {
     const project = await scrapProjectForActivity(activity)
     if (!project) {
       if (isDev)
-        console.error("No project found for activity", activity)
+        console.error("No project found for activity", activity.id)
       continue
     }
     stats.fetched += 1
