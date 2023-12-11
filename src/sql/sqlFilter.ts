@@ -6,15 +6,46 @@ export type EasySqlFilter<T extends typeof SqlType> = {
   [P in keyof InstanceType<T>]?: InstanceType<T>[P];
 }
 
-export class SqlFilterField<T extends typeof SqlType> {
-  public field: keyof T
+export enum SqlFieldOperator {
+  EQUAL = '=',
+  GREATER_THAN = '>',
+  GREATER_THAN_OR_EQUAL = '>=',
+  LESS_THAN = '<',
+  LESS_THAN_OR_EQUAL = '<=',
+  LIKE = 'LIKE',
+}
+
+export class SqlFilterField<T extends typeof SqlType, K extends InstanceType<T>> {
+  public field: keyof K
   public value: any
   public infos: ColumnInfos
+  public operator: SqlFieldOperator = SqlFieldOperator.EQUAL
+  public not: boolean = false
 
-  constructor(field: keyof T, value: any, infos: ColumnInfos) {
+  constructor(field: keyof K, value: any, infos: ColumnInfos, operator?: SqlFieldOperator, not?: boolean) {
     this.field = field
     this.value = value
     this.infos = infos
+    this.operator = operator ?? SqlFieldOperator.EQUAL
+    this.not = not ?? false
+  }
+
+  static from<T extends typeof SqlType, K extends InstanceType<T>>(type: T, field: keyof K, value: any, operator?: SqlFieldOperator, not?: boolean): SqlFilterField<T, K> {
+    const columnsMap = {} as Record<keyof K, ColumnInfos>
+    const empty = type.getEmptyObject()
+    const instanceKeys = (Object.keys(empty) as (keyof K)[]).filter((key) => Reflect.hasMetadata('column', empty, key.toString()))
+    for (const key of instanceKeys) {
+      columnsMap[key] = Reflect.getMetadata('column', empty, key.toString()) as ColumnInfos
+    }
+    return new SqlFilterField<T, K>(field, value, columnsMap[field], operator, not)
+  }
+
+  public toString(): string {
+    let r = ""
+    r += convertCase(this.infos.name.toString(), {from: Case.CAMEL_CASE, to: Case.SNAKE_CASE})
+    r += ` ${this.operator.toString()} `
+    r += SqlType.toSQLValue(this.value, this.infos)
+    return r
   }
 }
 
@@ -24,11 +55,11 @@ export enum SqlFilterOperator {
 }
 
 export default class SqlFilter<T extends typeof SqlType> {
-  public left: SqlFilter<T> | SqlFilterField<T>
+  public left: SqlFilter<T> | SqlFilterField<T, InstanceType<T>>
   public operator: SqlFilterOperator
-  public right: SqlFilter<T> | SqlFilterField<T> | boolean
+  public right: SqlFilter<T> | SqlFilterField<T, InstanceType<T>> | boolean
 
-  public constructor(left: SqlFilter<T> | SqlFilterField<T>, operator?: SqlFilterOperator, right?: SqlFilter<T> | SqlFilterField<T> | boolean) {
+  public constructor(left: SqlFilter<T> | SqlFilterField<T, InstanceType<T>>, operator?: SqlFilterOperator, right?: SqlFilter<T> | SqlFilterField<T, InstanceType<T>> | boolean) {
     this.left = left
     this.operator = operator ?? SqlFilterOperator.AND
     this.right = right ?? true
@@ -39,13 +70,13 @@ export default class SqlFilter<T extends typeof SqlType> {
     if (this.left instanceof SqlFilter) {
       r += `(${this.left.toString()})`
     } else {
-      r += `${convertCase(this.left.infos.name.toString(), {from: Case.CAMEL_CASE, to: Case.SNAKE_CASE})} = ${SqlType.toSQLValue(this.left.value, this.left.infos)}`
+      r += this.left.toString()
     }
     r += ` ${this.operator.toString()} `
     if (this.right instanceof SqlFilter) {
       r += `(${this.right.toString()})`
     } else if (this.right instanceof SqlFilterField) {
-      r += `${convertCase(this.right.infos.name.toString(), {from: Case.CAMEL_CASE, to: Case.SNAKE_CASE})} = ${SqlType.toSQLValue(this.right.value, this.right.infos)}`
+      r += this.right.toString()
     } else {
       r += this.right ? `TRUE` : `FALSE`
     }
@@ -53,19 +84,19 @@ export default class SqlFilter<T extends typeof SqlType> {
   }
 
   public static from<T extends typeof SqlType>(type: T, filter: EasySqlFilter<T>): SqlFilter<T> {
-    const columnsMap = {} as Record<keyof T, ColumnInfos>
+    const columnsMap = {} as Record<keyof InstanceType<T>, ColumnInfos>
     const empty = type.getEmptyObject()
-    const instanceKeys = (Object.keys(empty) as (keyof T)[]).filter((key) => Reflect.hasMetadata('column', empty, key.toString()))
+    const instanceKeys = (Object.keys(empty) as (keyof InstanceType<T>)[]).filter((key) => Reflect.hasMetadata('column', empty, key.toString()))
     for (const key of instanceKeys) {
       columnsMap[key] = Reflect.getMetadata('column', empty, key.toString()) as ColumnInfos
     }
 
-    const filters: SqlFilterField<T>[] = []
+    const filters: SqlFilterField<T, InstanceType<T>>[] = []
     for (const key in filter) {
-      const field = key as keyof T
+      const field = key as keyof InstanceType<T>
       const value = filter[field as keyof EasySqlFilter<T>]
       const infos = columnsMap[field]
-      const filterField = new SqlFilterField<T>(field, value, infos)
+      const filterField = new SqlFilterField<T, InstanceType<T>>(field, value, infos)
       filters.push(filterField)
     }
     const filterPairs = []

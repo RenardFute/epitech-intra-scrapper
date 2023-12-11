@@ -72,8 +72,8 @@ test('From SQL to Activity', async () => {
   expect(activity.module).toBe(40639)
   expect(activity.name).toBe('C in 29 minutes')
   expect(activity.isOngoing).toBe(false)
-  expect(activity.start.getTime()).toBe(dayjs('2022-09-26 00:00:00').toDate().getTime())
-  expect(activity.end.getTime()).toBe(dayjs('2022-10-02 00:00:00').toDate().getTime())
+  expect(activity.start.getTime()).toBe(dayjs('2022-09-25 22:00:00').toDate().getTime())
+  expect(activity.end.getTime()).toBe(dayjs('2022-10-01 22:00:00').toDate().getTime())
   expect(activity.location).toBe('FR/NAN')
   expect(activity.description).toBe('Learning C-programming is fast - here\'s the proof!')
   expect(activity.isProject).toBe(false)
@@ -81,7 +81,7 @@ test('From SQL to Activity', async () => {
   expect(activity.hasMeeting).toBe(true)
   expect(activity.url).toBe('https://intra.epitech.eu/module/2022/B-CPE-100/NAN-1-1/acti-555210')
   expect(activity.deadline).toBeNull()
-  expect(activity.begin.getTime()).toBe(dayjs('2022-09-26 00:00:00').toDate().getTime())
+  expect(activity.begin.getTime()).toBe(dayjs('2022-09-25 22:00:00').toDate().getTime())
   expect(activity.endRegister).toBeNull()
   expect(activity.type).toBe('Course')
   expect(activity.mainType).toBe('class')
@@ -114,7 +114,7 @@ test('Map Relation OneToMany', async () => {
 
   await module.map()
   expect(module.flags).toHaveLength(3)
-  expect(module.flags).toContainEqual(new ModuleFlag().fromJson({moduleId: id, flag: ModuleFlags.ROADBLOCK}))
+  expect(module.flags).toContainEqual(new ModuleFlag().fromJson({moduleId: id, flag: ModuleFlags.ROADBLOCK, id: ModuleFlag.computeId(id, ModuleFlags.ROADBLOCK)}))
 })
 
 afterAll(() => {

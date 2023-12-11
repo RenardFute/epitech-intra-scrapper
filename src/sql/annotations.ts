@@ -78,7 +78,8 @@ export function Id() {
 }
 
 export async function executeManyToMany<Target extends typeof SqlType, Source extends SqlType>(source: Source, relation: Relation<Target>) {
-  const sourceIdInfo = Reflect.getMetadata('column', source, 'id')
+  const sourceType = source.constructor as typeof SqlType
+  const sourceIdInfo = Reflect.getMetadata('column', source, SqlType.getIdKey(sourceType)) as ColumnInfos
   const ids = await connector.query(`SELECT ${relation.targetEntity.getTableName() + '_id'} FROM ${relation.joinTableName} WHERE ${source.getTableName() + '_id'} = ${SqlType.toSQLValue(source.id, sourceIdInfo)}`)
   const result = []
   for (const row of ids) {

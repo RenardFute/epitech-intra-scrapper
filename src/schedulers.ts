@@ -5,7 +5,6 @@ import Module from "./sql/objects/module"
 import { scrapActivitiesForModule } from "./intra/activities"
 import Activity from "./sql/objects/activity"
 import { scrapProjectForActivity } from "./intra/projects"
-import Project from "./sql/objects/project"
 import { isDev } from "./index"
 import { scrapEventsForActivity } from "./intra/events"
 import { scrapLocations } from "./intra/locations"
@@ -75,13 +74,11 @@ export const activitiesScrap = async (all?: boolean): Promise<ScrapStatistics> =
     const activities = await scrapActivitiesForModule(module)
     stats.fetched += activities.length
     for (const a of activities) {
-      const result = await connector.insertOrUpdate(Activity, a, SqlFilter.from(Activity,{id: a.id}))
-      if (result) {
-        if (result.isDiff) {
-          stats.updated++
-        }
-      } else {
+      const isNew = await a.save()
+      if (isNew) {
         stats.inserted++
+      } else {
+        stats.updated++
       }
     }
   }
@@ -112,13 +109,11 @@ export const projectScrap = async (all?: boolean): Promise<ScrapStatistics> => {
       continue
     }
     stats.fetched += 1
-    const result = await connector.insertOrUpdate(Project, project, SqlFilter.from(Project,{activity: project.activity}))
-    if (result) {
-      if (result.isDiff) {
-        stats.updated++
-      }
-    } else {
+    const isNew = await project.save()
+    if (isNew) {
       stats.inserted++
+    } else {
+      stats.updated++
     }
   }
   stats.time = Date.now() - stats.time
@@ -212,7 +207,9 @@ export const startSchedulers = async () => {
 
   setInterval(async () => {
     try {
-      connector.query("SELECT 1").then()
+      connector.query("SELECT 1").then(() => {
+        console.log("DB connection OK", new Date().toLocaleString())
+      })
     } catch (e) {
       console.error("DB connection lost", new Date().toLocaleString())
       console.error(e)

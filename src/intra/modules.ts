@@ -1,11 +1,9 @@
 import SourceUser, { Promo } from "../sql/objects/sourceUser"
 import Module from "../sql/objects/module"
-import connector from "../sql/connector"
 import dayjs from "dayjs"
 import { moduleDTO, ModuleFlags, ModuleFlagsMasks } from "./dto"
-import { fetchModulesForUser } from "./scrappers"
+import { fetchModulesForUser, getUserForPromo } from "./scrappers"
 import ModuleFlag from "../sql/objects/moduleFlag"
-import SqlFilter from "../sql/sqlFilter"
 
 const parseModule = async (dto: moduleDTO, source: SourceUser): Promise<Module | null> => {
   const nameFull = dto.title
@@ -67,7 +65,7 @@ export const findFlags = (flags: number): ModuleFlags[] => {
 }
 
 export const scrapModulesForPromo = async (promo: Promo): Promise<Module[]> => {
-  const user = await connector.getOne(SourceUser, SqlFilter.from(SourceUser,{ promo: promo, disabled: false }))
+  const user = await getUserForPromo(promo)
   if (!user) {
     console.error("No user found for promo", promo)
     return []

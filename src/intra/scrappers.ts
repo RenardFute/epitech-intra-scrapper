@@ -2,12 +2,15 @@ import {
   activityCodec,
   activityDTO,
   detailedModuleCodec,
-  detailedModuleDTO, detailedProjectCodec,
-  detailedProjectDTO, LocationCodec, LocationDTO,
+  detailedModuleDTO,
+  detailedProjectCodec,
+  detailedProjectDTO,
+  LocationCodec,
+  LocationDTO,
   moduleCodec,
   moduleDTO
 } from "./dto"
-import SourceUser from "../sql/objects/sourceUser"
+import SourceUser, { Promo } from "../sql/objects/sourceUser"
 import Module from "../sql/objects/module"
 import { isRight } from "fp-ts/Either"
 import * as t from 'io-ts'
@@ -16,9 +19,18 @@ import timezone from "dayjs/plugin/timezone"
 import utc from "dayjs/plugin/utc"
 import Activity from "../sql/objects/activity"
 import connector from "../sql/connector"
-import SqlFilter from "../sql/sqlFilter"
+import SqlFilter, { SqlFieldOperator, SqlFilterField, SqlFilterOperator } from "../sql/sqlFilter"
+
 dayjs.extend(timezone)
 dayjs.extend(utc)
+
+export const getUserForPromo = async (promo: Promo): Promise<SourceUser | null> => {
+  if (promo === Promo.TEKS) {
+    const filter = new SqlFilter(SqlFilterField.from(SourceUser, "promo", "TEK%", SqlFieldOperator.LIKE), SqlFilterOperator.AND, new SqlFilter(SqlFilterField.from(SourceUser, "disabled", false)))
+    return await connector.getOne(SourceUser, filter)
+  }
+  return await connector.getOne(SourceUser, SqlFilter.from(SourceUser,{ promo, disabled: false }))
+}
 
 export const fetchModulesForUser = async (user: SourceUser): Promise<moduleDTO[]> => {
   const r = await fetch("https://intra.epitech.eu/course/filter?format=json", {
@@ -75,7 +87,7 @@ export const fetchActivity = async (activity: Activity): Promise<activityDTO | n
     console.error("No module found for activity", activity.id)
     return null
   }
-  const user = await connector.getOne(SourceUser, SqlFilter.from(SourceUser,{ promo: module.promo, disabled: false }))
+  const user = await getUserForPromo(module.promo)
   if (!user) {
     console.error("No user found for module", module.id)
     return null

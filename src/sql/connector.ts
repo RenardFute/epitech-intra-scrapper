@@ -218,7 +218,6 @@ export class SqlConnect {
 
   /**
    * Insert an object into the database
-   * @param type - The type of the object to insert (has to extend SqlType)
    * @param object - The object to insert
    *
    * @returns {Promise<void>} A promise that resolves when the object is inserted
